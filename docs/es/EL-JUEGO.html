@@ -1,0 +1,121 @@
+<title>El juego — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html" style=color:var(--tinta)>El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-GAME.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-juego">El juego</h1>
+<p><img src="../imagenes/titulo.png" alt="La pantalla del título"></p>
+<p>Se pilota un helicóptero de izquierda a derecha sobre un terreno que corre, se dispara hacia delante y se sueltan bombas hacia abajo, y hay que llegar al final de cada zona sin chocar y sin quedarse sin combustible.</p>
+<h2 id="el-menu">El menú</h2>
+<p>Cuatro líneas y cuatro teclas. <code>LEE_TECLAS_DE_MENU</code> (0x488B) lee la fila 0 del teclado, se queda con los bits 1 a 4 —las teclas 1, 2, 3 y 4— y las traduce por la tabla de 0x48AC:</p>
+<table><tr><th>tecla</th><th></th></tr><tr><td>1</td><td>un jugador, joystick</td></tr><tr><td>2</td><td>dos jugadores, joystick</td></tr><tr><td>3</td><td>un jugador, teclado</td></tr><tr><td>4</td><td>dos jugadores, teclado</td></tr></table>
+<p>Lo que elige la tecla es el bit 4 de 0xE002 (teclado o joystick) y el bit 5 (uno o dos jugadores). Con el teclado, <code>LEE_TECLADO</code> (0x4863) arma <b>el mismo byte</b> que daría el joystick a partir de las filas 7 y 8: las cuatro flechas, el espacio y SELECT. De ahí para abajo, al juego le da igual de dónde vino.</p>
+<h2 id="las-vidas-y-los-dos-jugadores">Las vidas y los dos jugadores</h2>
+<p>Cada jugador tiene un bloque de <b>32 bytes</b>: 0xE050 el que está jugando y 0xE080 el que espera. El primer byte son las vidas, y arranca en 3 (0x490D).</p>
+<p>El cambio de turno (0x4778) intercambia los dos bloques enteros con <code>INTERCAMBIA</code> y de paso le da la vuelta al bit 7 de 0xE002, que es el que decide en 0x4838 <b>qué joystick se lee</b>. Un solo juego, dos marcadores, y el que manda siempre está en 0xE050.</p>
+<h2 id="el-combustible">El combustible</h2>
+<p>Es un solo byte, 0xE51C, y lo gasta el submodo 3 (0x5291). A ese submodo le toca uno de cada ocho fotogramas y además exige que los bits 2 a 5 del contador estén a cero: <b>una bajada cada 64 fotogramas</b>, poco más de un segundo.</p>
+<p>Quedarse sin combustible <b>no mata</b>. Cuando el <code>dec</code> se pasa de cero, el byte se devuelve a cero y se enciende 0xE560; y 0xE560 puesto es, en <code>MUEVE_LA_NAVE</code> (0x5185), lo que hace que la nave baje sola sin tocar el mando. Lo que mata es lo que hay debajo.</p>
+<p>La barra se pinta dividiendo entre cuatro: el cociente son las casillas llenas (el tile 0xC4) y <b>el resto, de 1 a 3, elige la casilla a medias</b>, que son los tres dibujos siguientes al 0xC4 (0x4F7C).</p>
+<h2 id="disparar">Disparar</h2>
+<p><code>DISPARA_O_BOMBEA</code> (0x51B1) mira el <b>flanco</b> del botón, no si está pulsado: <code>cpl</code> sobre lo del fotograma anterior (0xE008) y <code>and</code> con lo de ahora (0xE009) deja pasar solo el fotograma en que pasa de suelto a apretado. Sin eso, tener el botón apretado dispararía sesenta veces por segundo.</p>
+<p>Hacia dónde sale el disparo lo deciden <b>los tres bits bajos de la fila</b> de la nave (0x51C7), y el dibujo es 0xF0 más eso. Antes de darlo de alta se mira el tile de donde iría a parar: por debajo del tile 6 es cielo y el disparo cabe; si no, el hueco se deja libre y no sale nada.</p>
+<p>La bomba (0x51FD) se suelta doce píxeles por delante de la segunda mitad de la nave, y solo puede haber una en el aire (0xE51F).</p>
+<h2 id="las-zonas">Las zonas</h2>
+<p>Hay dos números de zona y no son el mismo:</p>
+<ul><li><b>0xE051</b> es el que se pinta, y va en BCD.</li><li><b>0xE053</b> es el de verdad, y sirve de índice.</li></ul>
+<p>Cada zona son <b>0xB6 columnas</b> (0x53C5), y 0xE50B lleva la cuenta de lo que falta para llegar. A falta de 0x12 columnas suena el aviso de que se llega.</p>
+<p>Los <b>dos bits bajos</b> de 0xE053 dicen de qué clase es la zona, así que el ciclo se repite cada cuatro. La clase decide cuatro cosas: qué fichas de sprite se montan (0x504A, cuatro por clase), qué tamaño tienen para los choques (0x5607, cuatro bytes por clase), cuál de las tres rutinas mueve lo que vuela (0x52F5) y cuál es la que remata el rótulo de fase pasada (0x522C).</p>
+<p>Superar una zona paga <b>1500 puntos</b> y cada tres zonas repone el depósito.</p>
+<p><img src="../imagenes/partida.png" alt="Una zona en marcha"></p>
+<h2 id="lo-que-sale-a-por-ti">Lo que sale a por ti</h2>
+<p>El submodo 7 (0x52CD) es el que sube la dificultad, y lo hace con la fase: <b>antes de la fase 3 la cuenta es cero</b>, de la 3 en adelante sube, y <b>de la 15 no pasa</b> (0x0C es el tope). Esa cuenta, por dos, se compara contra dos bits del contador de fotogramas: cuanto más avanzada la fase, más a menudo sale algo.</p>
+<p>Cuántos pueden estar en el aire a la vez sale de la tabla de 0x58D6, indexada por la zona con tope 12. Y en la zona 0 no dispara nadie: es la de aprender.</p>
+<h2 id="el-marcador">El marcador</h2>
+<p>Todo en BCD, con <code>daa</code> detrás de cada suma, y tres bytes por marcador: 0xE040 el récord, 0xE043 el jugador 1, 0xE046 el jugador 2.</p>
+<p>La vida extra se lleva en 0xE052, y lo que se compara es <b>el byte alto</b>, así que el escalón son decenas de millar: <code>add a,002h</code> en BCD sobre ese byte deja la vida extra <b>cada 20.000 puntos</b>. Al pasarse, el byte se pone a 0xFF y ya no hay más vidas extra en esa partida.</p>
+<p>Si el marcador pasa de 999999 lo que se planta en el máximo <b>es el récord</b> (0xE040-0xE042); los puntos del jugador dan la vuelta y siguen.</p>
+<h2 id="el-dado">El dado</h2>
+<p><code>PUNTOS_DE_PREMIO</code> (0x501E) da cincuenta puntos fijos o una cantidad sorteada, y el sorteo lo hace con <b>el registro R del Z80</b> —el contador de refresco de la memoria—: sus dos bits bajos dan 0, 1, 2 o 3, y eso se sube al byte alto. El premio es 0, 100, 200 o 300 puntos.</p>
+<h2 id="llegar">Llegar</h2>
+<p>Al final de la zona hay un depósito. <code>MIRA_SI_ATERRIZA</code> (0x50A1) lo compara con la nave usando los cuatro márgenes de 0x5648; tocado, 0xE54B pasa a 1 —que es aterrizando— y la ficha se queda con el dibujo 4.</p>
+<p>Y cuando se llega del todo, <code>LLEGA_A_LA_BASE</code> (0x5C41) borra los cuatro disparos que hubiera en el aire, apaga las dos fichas del depósito, pinta el cartel <b>INVASION SUCCEEDED</b> y paga otros 1500 puntos. El mismo cartel se borra después entrando por 0x4064 en vez de por 0x4068: la misma rutina, con C a cero.</p>
+<footer><p><em>Super Cobra</em> lo publico Konami para MSX; su numero de catalogo es RC-705 y son 8 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion.</p></footer></div>

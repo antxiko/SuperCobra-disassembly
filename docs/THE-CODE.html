@@ -1,0 +1,126 @@
+<title>The code — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html">The game</a><a href="THE-CARTRIDGE.html">The cartridge</a><a href="THE-CODE.html" style=color:var(--tinta)>The code</a><a href="FINDINGS.html">Findings</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EL-CODIGO.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="the-code">The code</h1>
+<h2 id="everything-happens-in-the-interrupt">Everything happens in the interrupt</h2>
+<p>INIT gets the machine ready and stops at a <code>jr $</code> (0x40AD) it never leaves. The only thing running from then on is the H.KEYI hook, that is 0x402B, once per frame.</p>
+<p>And inside that hook the order matters:</p>
+<pre><code>402B  in a,(099h)        reading VDP status drops the request
+402E  call SUENA         the sound, BEFORE the lock
+4031  ld a,(0E005h)      0xE005 is the lock
+      or a / ret nz      if it is not zero, no second entry
+4038  ld (hl),a / ei     the lock is set and interrupts are opened</code></pre>
+<p><b>The sound goes before the lock on purpose</b>: a game step can last more than one frame, and the music has to keep playing over it. And interrupts are opened <em>inside</em> the interrupt, with the lock already set, so that the next one comes in, touches the sound and leaves without trampling the step still in progress.</p>
+<h2 id="the-dispatcher-that-never-returns">The dispatcher that never returns</h2>
+<p><code>DESPACHA</code> (0x4050) does not keep its table apart. It does a <code>pop hl</code> —which does not undo the call, it <b>takes the return address to use as a base</b>—, adds the index doubled, reads the word and ends in <code>jp (hl)</code>. That is why the table sits right behind the <code>call</code>, and why it is never returned to.</p>
+<p>There are two:</p>
+<table><tr><th>where</th><th>entries</th><th>index</th><th></th></tr><tr><td>0x46AD</td><td>15 words</td><td>(0xE000)</td><td>the game state</td></tr><tr><td>0x516F</td><td>8 words</td><td>(0xE003) and 7</td><td>the in-game submode</td></tr></table>
+<p>Ending in <code>jp (hl)</code> instead of a <code>call</code> has a consequence: the <code>ret</code> of the dispatched routine <b>does not go back to the dispatcher</b>, it goes back to whatever the caller left on the stack. 0x4691 exploits that by doing a <code>push hl</code> with the address of another routine before dispatching. That is what makes 0x488B and 0x49EA run without anyone calling them.</p>
+<h2 id="the-fifteen-states">The fifteen states</h2>
+<p>The state lives in 0xE000, and almost every routine ends in the same pair of lines: 0x4742 puts A into 0xE004 —the timer— and falls into 0x4745, which bumps 0xE000. The ones that wait check 0xE004 with <code>dec (hl) / ret nz</code>.</p>
+<table><tr><th></th><th></th></tr><tr><td>00</td><td>uploads the VDP registers and gets the screen up</td></tr><tr><td>01</td><td>raises the big KONAMI one row every two frames</td></tr><tr><td>02, 03, 05</td><td>waits</td></tr><tr><td>04</td><td>clears and builds the title screen</td></tr><tr><td>06</td><td>builds the PLAY SELECT menu</td></tr><tr><td>07</td><td>waits for a choice</td></tr><tr><td>08</td><td>the attract demo</td></tr><tr><td>09</td><td>takes a life off and announces whose turn it is</td></tr><tr><td>10</td><td>clears the announcement and lets the player go</td></tr><tr><td>11</td><td><b>the game</b>; it stays here until 0xE06F goes off</td></tr><tr><td>12</td><td>checks whether the active player has lives left</td></tr><tr><td>13</td><td>changes turns</td></tr><tr><td>14</td><td>end of game, unless the other player is still alive</td></tr></table>
+<p>08 is the odd one: it is the only one entered without a <code>push</code>, so its <code>ret</code> goes back to the caller instead of to the dispatcher.</p>
+<p><img src="imagenes/logotipo.png" alt="The logo rising"></p>
+<p>*State 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) raises the KONAMI from the bottom up, one row of 32 bytes per call, and draws it split in three: three tiles on top, eleven in the middle and twelve below.*</p>
+<h2 id="the-eight-submodes">The eight submodes</h2>
+<p>Inside a game step, the table at 0x516F is indexed with <b>the frame counter</b> and</p>
+<ol><li>These are not states that follow one another: they are eight jobs that take</li></ol>
+<p>turns, one per frame, because they do not all fit in the same one.</p>
+<table><tr><th></th><th></th></tr><tr><td>0</td><td>swaps buffers and uploads the terrain to the screen</td></tr><tr><td>1</td><td>the twin of 0 for the top half</td></tr><tr><td>2 and 6</td><td>the engine flame, and then move the flying things</td></tr><tr><td>3</td><td>burns fuel</td></tr><tr><td>4</td><td>moves the flying things, <b>without</b> touching the flame</td></tr><tr><td>5</td><td>releases what the terrain shoots</td></tr><tr><td>7</td><td>the difficulty</td></tr></table>
+<p>4 is the only one of the eight that <b>does not enter at the start of a routine</b>: it points at 0x5278, three instructions further into 2, right after the <code>call</code> that moves the engine flame. The same routine does two different jobs depending on where you come in.</p>
+<h2 id="the-terrain">The terrain</h2>
+<p>The stage&#x27;s terrain is built whole in RAM when the game starts (<code>MONTA_EL_MAPA</code>, 0x4106), and it is built <b>double-buffered</b>: 0xE50D flips between 0 and 1 with a <code>xor 1</code>, and the page comes out of that, 0xE800 with 0 and 0xEA00 with 1. While one is being dumped to video memory, the other is being built.</p>
+<p>Scrolling it one column is five batches of 0x1F bytes, each shifted by one place (0x532F). Five rows, and 0x20 bytes between rows: one column top to bottom.</p>
+<p>What gets laid into the buffer comes from a <b>recipe</b> (0x45E5): one byte per stretch, the low two bits say what class it is and the rest says where it goes.</p>
+<h2 id="the-seven-bytes-that-run-in-ram">The seven bytes that run in RAM</h2>
+<p>0x412B copies seven bytes from 0x41DD to 0xE5F8 and calls them as a routine from then on. Set up over there, they are:</p>
+<pre><code>E5F8  32 FD E5     ld (0E5FDh),a
+E5FB  DD 70 00     ld (ix+000h),b
+E5FE  C9           ret</code></pre>
+<p>0xE5FD **is the third byte of the <code>ld (ix+000h),b</code>**, that is, its own displacement. The routine writes the displacement over itself with A and then stores B: it is <code>ld (IX+A),B</code>, which the Z80 cannot do, because IX&#x27;s displacement is a fixed byte of the opcode and not a register.</p>
+<p>That is why it has to run in RAM, and why those are <b>the only seven bytes of this cartridge that do not run from ROM</b>.</p>
+<h2 id="collisions">Collisions</h2>
+<p><code>HAY_CHOQUE</code> (0x53DC) is one single test for everything: it subtracts the other one&#x27;s position and its width, adds its own width, and if that does not overflow, they do not touch on that axis. The same on the other axis, and there is a collision only if they overlap on both. The sizes always come in (HL), and each thing brings its own table:</p>
+<table><tr><th></th><th></th></tr><tr><td>0x5607</td><td>the flying things, four bytes per zone class</td></tr><tr><td>0x55D3</td><td>the bomb against the terrain, per tile family</td></tr><tr><td>0x55E3</td><td>the bomb, per attribute drawing</td></tr><tr><td>0x55F3</td><td>the shot, per attribute drawing</td></tr><tr><td>0x5634</td><td>tiles 0x87 and up, which take more than one cell</td></tr><tr><td>0x5648</td><td>the fuel dump at the end of the zone</td></tr><tr><td>0x564C</td><td>the base</td></tr></table>
+<p>Every frame three checks are chained (0x5139) and <b>as soon as one sets carry the rest are skipped</b>. Between columns 0x99 and 0xA1 none of them is checked: that is the stage change.</p>
+<footer><p><em>Super Cobra</em> was published by Konami for the MSX; its catalogue number is RC-705 and it is 8 KB. All rights in the game remain with their holders. This is preservation, study and documentation work.</p></footer></div>

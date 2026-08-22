@@ -1,0 +1,111 @@
+<title>Getting started — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html" style=color:var(--tinta)>Start</a><a href="THE-GAME.html">The game</a><a href="THE-CARTRIDGE.html">The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EMPEZAR.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="getting-started">Getting started</h1>
+<p>This repository holds a <b>commented disassembly</b> of Super Cobra for the MSX (Konami, 1983, cartridge RC-705). Everything here comes out of the binary and can be regenerated from it.</p>
+<h2 id="what-you-need">What you need</h2>
+<ul><li><b>Python 3</b> (no third-party packages)</li><li><b>pasmo</b>, to reassemble</li><li><b>z80dasm</b>, used only for the mnemonics</li><li>the cartridge image, which this repository <b>does not distribute</b></li></ul>
+<p>The ROM goes in the root, as <code>supercobra.rom</code>. Exactly 8192 bytes:</p>
+<pre><code>sha256  062aeefd04e6ac28f565c15bd1010fc2a007bfbe8d3898ff8586778462091470</code></pre>
+<p><code>make comprueba</code> checks it.</p>
+<h2 id="the-commands">The commands</h2>
+<pre><code>make                # trace, listing, reassembly, checks and tests
+make listado        # rebuilds src/supercobra.asm from the annotations
+make verify         # reassembles and compares with the ROM, byte for byte
+make sanity         # nothing declared as data may come out as code,
+                    # and no byte may be left unassigned
+make test           # the checks
+make imagenes       # rebuilds the drawings by reading the ROM
+make web            # rebuilds this site</code></pre>
+<h2 id="what-is-in-each-folder">What is in each folder</h2>
+<table><tr><th></th><th></th></tr><tr><td><code>src/supercobra.entries</code></td><td>the entry points, each with its justification</td></tr><tr><td><code>src/supercobra.nocode</code></td><td>the ranges the tracer must not read as code</td></tr><tr><td><code>src/supercobra.notes</code></td><td><b>the only file edited by hand</b>: all the annotations</td></tr><tr><td><code>src/supercobra.asm</code></td><td>the listing, generated by <code>tools/mkasm.py</code></td></tr><tr><td><code>tools/</code></td><td>the tracer, the listing generator and the measuring tools</td></tr><tr><td><code>tests/</code></td><td>the checks on the listing and the annotations</td></tr><tr><td><code>docs/</code></td><td>this site</td></tr></table>
+<h2 id="how-to-read-the-listing">How to read the listing</h2>
+<p>Annotations are <b>anchored to an address</b>, so they survive a retrace. The directives follow theNestruo&#x27;s guidelines:</p>
+<table><tr><th></th><th></th></tr><tr><td><code>L</code></td><td>a label and what the routine does</td></tr><tr><td><code>C</code></td><td>a comment on that line</td></tr><tr><td><code>B</code></td><td>a block header before that address</td></tr><tr><td><code>D</code></td><td>a data range, with its name and its explanation</td></tr><tr><td><code>F</code></td><td>the row width of a data block</td></tr></table>
+<h2 id="how-it-was-done">How it was done</h2>
+<p>The tracer follows the real flow from the entry points. What cannot be deduced statically —the interrupt hook, the two tables embedded behind a <code>call</code>— is declared by hand in the <code>.entries</code>, with the reason written next to it.</p>
+<p>This cartridge also has two routines that **are never reached by a <code>call</code>**: 0x4691 does a <code>push hl</code> with the address of one of them, and the dispatcher ends in <code>jp (hl)</code>, so the <code>ret</code> of the state routine lands there. Without that, 0x488B and 0x49EA stayed declared as data while being code.</p>
+<p>There is no assumption dressed up as a fact here. What is not known is in <a href="OPEN-QUESTIONS.html">Open questions</a>, and it says so.</p>
+<h2 id="reproducibility">Reproducibility</h2>
+<p><code>make verify</code> reassembles the listing and compares the result with the original ROM. It has to come out <b>identical, byte for byte</b>. And <code>make sanity</code> then checks what reassembly cannot catch: that no range declared as data is being read as code, and that <b>not a single one of the 8192 bytes</b> is left unassigned.</p>
+<footer><p><em>Super Cobra</em> was published by Konami for the MSX; its catalogue number is RC-705 and it is 8 KB. All rights in the game remain with their holders. This is preservation, study and documentation work.</p></footer></div>

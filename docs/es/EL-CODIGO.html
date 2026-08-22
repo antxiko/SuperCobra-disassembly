@@ -1,0 +1,124 @@
+<title>El código — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html" style=color:var(--tinta)>El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-CODE.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-codigo">El código</h1>
+<h2 id="todo-pasa-en-la-interrupcion">Todo pasa en la interrupción</h2>
+<p>INIT deja la máquina lista y se para en un <code>jr $</code> (0x40AD) del que no sale nunca. Lo único que corre a partir de ahí es el gancho H.KEYI, o sea 0x402B, una vez por fotograma.</p>
+<p>Y dentro de ese gancho el orden importa:</p>
+<pre><code>402B  in a,(099h)        leer el estado del VDP baja la petición
+402E  call SUENA         el sonido, ANTES del candado
+4031  ld a,(0E005h)      0xE005 es el candado
+      or a / ret nz      si no está a cero, no se entra otra vez
+4038  ld (hl),a / ei     se echa el candado y se abren las interrupciones</code></pre>
+<p><b>El sonido va antes del candado a propósito</b>: un paso del juego puede durar más de un fotograma, y la música tiene que seguir sonando por encima. Y las interrupciones se abren <em>dentro</em> de la interrupción, con el candado ya echado, para que la siguiente entre, toque el sonido y se vuelva sin pisar el paso que sigue a medias.</p>
+<h2 id="el-despachador-que-no-vuelve">El despachador que no vuelve</h2>
+<p><code>DESPACHA</code> (0x4050) no lleva la tabla aparte. Hace <code>pop hl</code> —que no deshace la llamada, sino que <b>coge la dirección de retorno para usarla de base</b>—, suma el índice por dos, lee la palabra y termina en <code>jp (hl)</code>. Por eso la tabla va pegada justo detrás del <code>call</code>, y por eso no se vuelve nunca a él.</p>
+<p>Hay dos:</p>
+<table><tr><th>dónde</th><th>entradas</th><th>índice</th><th></th></tr><tr><td>0x46AD</td><td>15 palabras</td><td>(0xE000)</td><td>el estado del juego</td></tr><tr><td>0x516F</td><td>8 palabras</td><td>(0xE003) and 7</td><td>el submodo de la partida</td></tr></table>
+<p>Que termine en <code>jp (hl)</code> en vez de en <code>call</code> tiene una consecuencia: el <code>ret</code> de la rutina despachada <b>no vuelve al despachador</b>, vuelve a lo que hubiera dejado el llamador en la pila. 0x4691 se aprovecha de eso haciendo <code>push hl</code> con la dirección de otra rutina antes de despachar. Es lo que hace que 0x488B y 0x49EA se ejecuten sin que nadie las llame.</p>
+<h2 id="los-quince-estados">Los quince estados</h2>
+<p>El estado vive en 0xE000 y casi todas las rutinas acaban en el mismo par de líneas: 0x4742 deja A en 0xE004 —el temporizador— y cae en 0x4745, que sube 0xE000. Los que esperan miran 0xE004 con <code>dec (hl) / ret nz</code>.</p>
+<table><tr><th></th><th></th></tr><tr><td>00</td><td>sube los registros del VDP y deja la pantalla puesta</td></tr><tr><td>01</td><td>sube el KONAMI grande una fila cada dos fotogramas</td></tr><tr><td>02, 03, 05</td><td>esperas</td></tr><tr><td>04</td><td>limpia y monta la pantalla del título</td></tr><tr><td>06</td><td>monta el menú de PLAY SELECT</td></tr><tr><td>07</td><td>espera a que se elija</td></tr><tr><td>08</td><td>la demostración</td></tr><tr><td>09</td><td>descuenta una vida y anuncia de quién es el turno</td></tr><tr><td>10</td><td>borra el anuncio y suelta al jugador</td></tr><tr><td>11</td><td><b>el juego</b>; aquí se está hasta que 0xE06F se apaga</td></tr><tr><td>12</td><td>mira si al jugador activo le quedan vidas</td></tr><tr><td>13</td><td>cambia el turno</td></tr><tr><td>14</td><td>fin de partida, salvo que el otro jugador siga vivo</td></tr></table>
+<p>El 08 es el raro: es el único al que se entra sin <code>push</code>, así que su <code>ret</code> vuelve al llamador en vez de al despachador.</p>
+<p><img src="../imagenes/logotipo.png" alt="El logotipo subiendo"></p>
+<p>*El estado 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) sube el KONAMI de abajo arriba, una fila de 32 bytes por llamada, y lo pinta partido en tres: tres tiles arriba, once en medio y doce abajo.*</p>
+<h2 id="los-ocho-submodos">Los ocho submodos</h2>
+<p>Dentro de un paso de partida, la tabla de 0x516F se indexa con <b>el contador de fotogramas</b> y 7. No son estados que se sucedan: son ocho trabajos que se turnan, uno por fotograma, porque no caben todos en el mismo.</p>
+<table><tr><th></th><th></th></tr><tr><td>0</td><td>cambia de búfer y sube el decorado a la pantalla</td></tr><tr><td>1</td><td>el gemelo del 0 para la mitad de arriba</td></tr><tr><td>2 y 6</td><td>la llama del motor, y luego mueven lo que vuela</td></tr><tr><td>3</td><td>gasta combustible</td></tr><tr><td>4</td><td>mueve lo que vuela, <b>sin</b> tocar la llama</td></tr><tr><td>5</td><td>suelta lo que dispara el decorado</td></tr><tr><td>7</td><td>la dificultad</td></tr></table>
+<p>El 4 es el único de los ocho que <b>no entra por el principio de una rutina</b>: apunta a 0x5278, tres instrucciones más adentro del 2, justo detrás del <code>call</code> que mueve la llama del motor. La misma rutina hace dos trabajos distintos según por dónde se entre.</p>
+<h2 id="el-decorado">El decorado</h2>
+<p>El terreno de la fase se monta entero en la RAM al empezar la partida (<code>MONTA_EL_MAPA</code>, 0x4106), y se monta <b>a doble búfer</b>: 0xE50D alterna entre 0 y 1 con un <code>xor 1</code>, y de ahí sale la página, 0xE800 con el 0 y 0xEA00 con el 1. Mientras uno se vuelca a la memoria de vídeo, el otro se está montando.</p>
+<p>Correrlo una columna son cinco tandas de 0x1F bytes, cada una desplazada un sitio (0x532F). Cinco filas, y entre fila y fila 0x20 bytes: una columna de arriba abajo.</p>
+<p>Lo que se despliega en el búfer sale de una <b>receta</b> (0x45E5): un byte por tramo, los dos bits bajos dicen de qué clase es y el resto, dónde va.</p>
+<h2 id="los-siete-bytes-que-se-ejecutan-en-la-ram">Los siete bytes que se ejecutan en la RAM</h2>
+<p>0x412B copia siete bytes de 0x41DD a 0xE5F8 y desde entonces se los llama como rutina. Montados allá son:</p>
+<pre><code>E5F8  32 FD E5     ld (0E5FDh),a
+E5FB  DD 70 00     ld (ix+000h),b
+E5FE  C9           ret</code></pre>
+<p>0xE5FD **es el tercer byte del <code>ld (ix+000h),b</code>**, o sea su propio desplazamiento. La rutina se escribe encima el desplazamiento con A y entonces guarda B: es <code>ld (IX+A),B</code>, que el Z80 no sabe hacer, porque el desplazamiento de IX es un byte fijo del opcode y no un registro.</p>
+<p>Por eso hay que ejecutarla en RAM, y por eso son <b>los únicos siete bytes de este cartucho que no corren desde la ROM</b>.</p>
+<h2 id="chocar">Chocar</h2>
+<p><code>HAY_CHOQUE</code> (0x53DC) es un solo test para todo: resta la posición del otro y su ancho, le suma el ancho propio, y si eso no se desborda, en ese eje no se tocan. Lo mismo en el otro eje, y solo hay choque si se pisan en los dos. Los tamaños van siempre en (HL), y cada cosa trae su tabla:</p>
+<table><tr><th></th><th></th></tr><tr><td>0x5607</td><td>lo que vuela, cuatro bytes por clase de zona</td></tr><tr><td>0x55D3</td><td>la bomba contra el decorado, por familia de tile</td></tr><tr><td>0x55E3</td><td>la bomba, por dibujo de la ficha</td></tr><tr><td>0x55F3</td><td>el disparo, por dibujo de la ficha</td></tr><tr><td>0x5634</td><td>los tiles del 0x87 para arriba, que ocupan más de una casilla</td></tr><tr><td>0x5648</td><td>el depósito del final de zona</td></tr><tr><td>0x564C</td><td>la base</td></tr></table>
+<p>En cada fotograma se encadenan tres comprobaciones (0x5139) y <b>en cuanto una da carry las demás no se miran</b>. Entre las columnas 0x99 y 0xA1 no se mira ninguna: es el paso de fase.</p>
+<footer><p><em>Super Cobra</em> lo publico Konami para MSX; su numero de catalogo es RC-705 y son 8 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion.</p></footer></div>

@@ -1,0 +1,52 @@
+# Puntos de entrada de Super Cobra (Konami, RC-705). ROM de 8 KB en 0x4000.
+#
+# El unico punto de entrada que declara el cartucho: la BIOS lee la cabecera
+# "AB" y llama a INIT tras inicializar la maquina.
+0x407D   # INIT, declarado en la cabecera del cartucho (bytes 2-3: 7d 40)
+
+0x402B   # la rutina de interrupcion. INIT escribe `jp 0x402B` en el gancho
+         # H.KEYI (0xFD9A): `ld a,0C3h / ld (0FD9Ah),a / ld hl,402Bh /
+         # ld (0FD9Bh),hl` en 0x4090-0x409A. La BIOS lo llama en cada
+         # interrupcion, y el hilo principal se queda en `jr $` (0x40AD): el
+         # juego entero corre aqui dentro.
+
+# --- Los 22 destinos de las dos tablas del despachador de 0x4050. Como el
+#     despachador termina en `jp (hl)`, el trazador no puede alcanzarlos solo.
+
+# Tabla de 0x46AD, 15 palabras. El indice es (0xE000), el estado del juego.
+# En 0x46A2: `ld a,(0E000h) / cp 8 / jr z,+1 / push hl / call 0x4050`.
+0x46CB   # estado 0
+0x46D6   # estado 1
+0x46E9   # estado 2
+0x46EE   # estado 3
+0x46F0   # estado 4
+0x46F9   # estado 5
+0x4700   # estado 6
+0x4724   # estado 7
+0x47B0   # estado 8 (el unico que llega sin el `push hl` de 0x46A9)
+0x4708   # estado 9
+0x472F   # estado 10
+0x474A   # estado 11
+0x4754   # estado 12
+0x4778   # estado 13
+0x478C   # estado 14
+
+# Tabla de 0x516F, 8 palabras. El indice es (0xE003) and 7, asi que la novena
+# palabra (0x517F) no la alcanza nadie y queda fuera de la tabla.
+0x520F   # submodo 0
+0x5305   # submodo 1
+0x5275   # submodo 2 (y tambien el 6)
+0x5291   # submodo 3
+0x5278   # submodo 4
+0x52B4   # submodo 5
+0x52CD   # submodo 7
+
+# --- Las dos rutinas de mandos, a las que se RETORNA en vez de llamarlas.
+#     En 0x4691: `ld a,(0E002h) / and 40h / ld hl,49EAh / jr nz,+3 /
+#     ld hl,488Bh / ld a,(0E000h) / cp 8 / jr z,+1 / push hl / call 0x4050`.
+#     El despachador de 0x4050 saca su direccion de retorno con `pop hl` y
+#     termina en `jp (hl)`, asi que lo que queda encima de la pila es ese
+#     `push hl`: cuando la rutina del estado hace `ret`, aterriza aqui.
+#     (En el estado 8 no se empuja nada y el `ret` vuelve al llamador.)
+0x488B   # el teclado: `ld a,50h / out (0AAh),a / in a,(0A9h) / cpl / and 1Eh`
+0x49EA   # la otra rama, la que se elige con el bit 6 de 0xE002

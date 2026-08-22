@@ -1,0 +1,121 @@
+<title>The game — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html" style=color:var(--tinta)>The game</a><a href="THE-CARTRIDGE.html">The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EL-JUEGO.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="the-game">The game</h1>
+<p><img src="imagenes/titulo.png" alt="The title screen"></p>
+<p>You fly a helicopter left to right over scrolling terrain, shoot forwards and drop bombs downwards, and have to reach the end of each zone without crashing and without running out of fuel.</p>
+<h2 id="the-menu">The menu</h2>
+<p>Four lines and four keys. <code>LEE_TECLAS_DE_MENU</code> (0x488B) reads row 0 of the keyboard, keeps bits 1 to 4 —keys 1, 2, 3 and 4— and translates them through the table at 0x48AC:</p>
+<table><tr><th>key</th><th></th></tr><tr><td>1</td><td>one player, joystick</td></tr><tr><td>2</td><td>two players, joystick</td></tr><tr><td>3</td><td>one player, keyboard</td></tr><tr><td>4</td><td>two players, keyboard</td></tr></table>
+<p>What the key picks is bit 4 of 0xE002 (keyboard or joystick) and bit 5 (one or two players). With the keyboard, <code>LEE_TECLADO</code> (0x4863) assembles <b>the very same byte</b> the joystick would give, out of rows 7 and 8: the four arrows, the space bar and SELECT. From there down, the game does not care where it came from.</p>
+<h2 id="lives-and-the-two-players">Lives and the two players</h2>
+<p>Each player has a <b>32-byte</b> block: 0xE050 for whoever is playing and 0xE080 for the one waiting. The first byte is the lives, and it starts at 3 (0x490D).</p>
+<p>Changing turns (0x4778) swaps the two blocks whole with <code>INTERCAMBIA</code> and flips bit 7 of 0xE002 on the way, which is what decides at 0x4838 <b>which joystick is read</b>. One game, two scores, and whoever is up is always at 0xE050.</p>
+<h2 id="fuel">Fuel</h2>
+<p>It is a single byte, 0xE51C, and submode 3 (0x5291) burns it. That submode gets one frame in eight and also demands that bits 2 to 5 of the frame counter be zero: <b>one tick every 64 frames</b>, a little over a second.</p>
+<p>Running out of fuel <b>does not kill you</b>. When the <code>dec</code> goes past zero the byte is put back to zero and 0xE560 is set; and 0xE560 set is, in <code>MUEVE_LA_NAVE</code> (0x5185), what makes the ship sink on its own without touching the controls. What kills you is whatever is underneath.</p>
+<p>The gauge is drawn by dividing by four: the quotient is the full cells (tile 0xC4) and <b>the remainder, 1 to 3, picks the half-full cell</b>, which is one of the three drawings right after 0xC4 (0x4F7C).</p>
+<h2 id="shooting">Shooting</h2>
+<p><code>DISPARA_O_BOMBEA</code> (0x51B1) looks at the <b>edge</b> of the button, not at whether it is held: <code>cpl</code> on the previous frame (0xE008) and <code>and</code> with the current one (0xE009) lets through only the frame where it goes from released to pressed. Without that, holding the button down would fire sixty times a second.</p>
+<p>Where the shot goes is decided by <b>the low three bits of the ship&#x27;s row</b> (0x51C7), and the drawing is 0xF0 plus that. Before the shot is registered the tile where it would land is checked: below tile 6 it is sky and the shot fits; otherwise the slot is released and nothing comes out.</p>
+<p>The bomb (0x51FD) drops twelve pixels ahead of the ship&#x27;s rear half, and only one can be in the air at a time (0xE51F).</p>
+<h2 id="the-zones">The zones</h2>
+<p>There are two zone numbers and they are not the same one:</p>
+<ul><li><b>0xE051</b> is the one that gets drawn, and it is BCD.</li><li><b>0xE053</b> is the real one, and it serves as an index.</li></ul>
+<p>Each zone is <b>0xB6 columns</b> long (0x53C5), and 0xE50B counts down what is left to reach the end. With 0x12 columns to go, the arrival warning sounds.</p>
+<p>The <b>low two bits</b> of 0xE053 say what class the zone is, so the cycle repeats every four. The class decides four things: which sprite attributes are built (0x504A, four per class), what size they are for collisions (0x5607, four bytes per class), which of the three routines moves the flying things (0x52F5), and which one finishes off the zone-cleared banner (0x522C).</p>
+<p>Clearing a zone pays <b>1500 points</b>, and every three zones the tank is refilled.</p>
+<p><img src="imagenes/partida.png" alt="A zone in progress"></p>
+<h2 id="what-comes-after-you">What comes after you</h2>
+<p>Submode 7 (0x52CD) raises the difficulty, and it does so with the stage: <b>before stage 3 the count is zero</b>, from 3 up it climbs, and <b>it stops at 15</b> (0x0C is the cap). That count, doubled, is compared against two bits of the frame counter: the further along the stage, the more often something appears.</p>
+<p>How many can be in the air at once comes from the table at 0x58D6, indexed by the zone with a cap of 12. And in zone 0 nobody shoots: it is the learning one.</p>
+<h2 id="the-score">The score</h2>
+<p>All BCD, with a <code>daa</code> after every addition, and three bytes per score: 0xE040 the high score, 0xE043 player 1, 0xE046 player 2.</p>
+<p>The extra life is tracked in 0xE052, and what is compared is <b>the high byte</b>, so the step is in tens of thousands: <code>add a,002h</code> in BCD on that byte puts the extra life <b>every 20,000 points</b>. Once past, the byte goes to 0xFF and there are no more extra lives that game.</p>
+<p>If the score passes 999999, what gets pinned at the maximum <b>is the high score</b> (0xE040-0xE042); the player&#x27;s own points wrap around and carry on.</p>
+<h2 id="the-dice">The dice</h2>
+<p><code>PUNTOS_DE_PREMIO</code> (0x501E) gives either fifty fixed points or a random amount, and it rolls that with <b>the Z80&#x27;s R register</b> —the memory refresh counter—: its low two bits give 0, 1, 2 or 3, and that is added to the high byte. The prize is 0, 100, 200 or 300 points.</p>
+<h2 id="arriving">Arriving</h2>
+<p>At the end of the zone there is a fuel dump. <code>MIRA_SI_ATERRIZA</code> (0x50A1) compares it against the ship using the four margins at 0x5648; on contact, 0xE54B goes to 1 —which is landing— and the attribute is left on drawing 4.</p>
+<p>And when you get all the way there, <code>LLEGA_A_LA_BASE</code> (0x5C41) erases whatever shots were in the air, switches off the two dump attributes, draws the <b>INVASION SUCCEEDED</b> banner and pays another 1500 points. The same banner is erased afterwards by entering at 0x4064 instead of 0x4068: the same routine, with C at zero.</p>
+<footer><p><em>Super Cobra</em> was published by Konami for the MSX; its catalogue number is RC-705 and it is 8 KB. All rights in the game remain with their holders. This is preservation, study and documentation work.</p></footer></div>

@@ -1,0 +1,117 @@
+<title>The cartridge — Super Cobra (1983)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html">The game</a><a href="THE-CARTRIDGE.html" style=color:var(--tinta)>The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EL-CARTUCHO.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="the-cartridge">The cartridge</h1>
+<h2 id="the-header-and-the-machine">The header and the machine</h2>
+<p>An 8 KB cartridge in <b>page 1</b>, from 0x4000 to 0x5FFF.</p>
+<pre><code>4000  41 42 7d 40 00 00 00 00 ...      &quot;AB&quot;, and behind it INIT = 0x407D</code></pre>
+<p>Only INIT is declared; the other three vectors are zero. INIT wipes 0xE000 to 0xF7FF in one go —all the RAM the game uses—, leaves the stack at 0xF800, writes <code>jp 0x402B</code> into the H.KEYI hook (0xFD9A) and settles into a <code>jr $</code> (0x40AD). From then on <b>the main thread never does anything again</b>: the whole game runs inside the interrupt.</p>
+<h2 id="video-memory">Video memory</h2>
+<p>SCREEN 2, with the eight registers coming from 0x4830 and uploaded one by one by 0x4813:</p>
+<table><tr><th></th><th></th></tr><tr><td>name table</td><td>0x3800</td></tr><tr><td>pattern table</td><td>0x2000</td></tr><tr><td>colour table</td><td>0x0000</td></tr><tr><td>sprite attributes</td><td>0x3B00</td></tr><tr><td>sprite patterns</td><td>0x1800, 16×16</td></tr></table>
+<p>The addresses the code handles have 0x4000 added: that is the write bit <code>VPOKE</code> sets on D before sending them to the VDP. That is why the listing reads <code>ld de,06300h</code> where the real video memory is 0x2300.</p>
+<p>SCREEN 2 splits patterns and colours into three 2 KB thirds, and this game wants them identical: it builds the first and then copies <b>inside video memory itself</b>, without reading the ROM again (<code>REPITE_TERCIOS</code>, 0x4A95).</p>
+<h2 id="the-letters-are-not-in-the-cartridge">The letters are not in the cartridge</h2>
+<p><code>SUBE_FUENTE</code> (0x4AA0) reads <code>CGTBL</code> —the pointer at address 0x0004 of the BASIC ROM— and uploads <b>0x180 bytes of the machine&#x27;s font</b>: 48 characters, from <code>0</code> to <code>_</code>. The score digits and the menu words are the MSX&#x27;s own letters, not Konami artwork.</p>
+<p>And it uploads them twice, with two different offsets and two different colours, because in SCREEN 2 colour goes per pattern line and the same character cannot have two colours.</p>
+<p><img src="imagenes/tiles.png" alt="The tiles of the top third"></p>
+<p><em>The 256 tiles of the top third after the title screen is built. The grey ones are the ones the cartridge does not carry: that is where the letters copied from the BIOS land.</em></p>
+<h2 id="the-two-drawing-interpreters">The two drawing interpreters</h2>
+<p>The cartridge does not store graphics raw. It has two formats and two routines:</p>
+<p>**<code>PINTA_DIBUJO</code> (0x4068)** — a video memory address, and behind it the bytes as they are. <code>0xFE</code> closes the run and asks for another address; <code>0xFF</code> closes the drawing. Its twin <code>BORRA_DIBUJO</code> (0x4064) is <b>the same routine</b>: it enters two bytes earlier with C = 0x00 instead of 0xFF, and the <code>and c</code> at 0x4076 turns every byte into a zero. One loop draws and erases.</p>
+<p>**<code>PINTA_ROTULO</code> (0x4AC6)** — the compressed one. A command byte: with bit 7 set, C distinct bytes follow; without it, one byte is repeated C times. <code>0x80</code> opens another run at another address and <code>0x00</code> closes.</p>
+<h2 id="the-sprites">The sprites</h2>
+<p>Sprite patterns have a single supplier: the stream at 0x443A, the only thing in the whole cartridge that writes to video memory 0x1800. That is 144 bytes at 0x1800 and 328 at 0x18A8.</p>
+<p><img src="imagenes/sprites.png" alt="The sprite drawings"></p>
+<p><em>The 16×16 sprite drawings, taken from video memory 0x1800. They come out white because the colour is not in the drawing: it is in the attribute, four bytes per sprite —row, column, drawing and colour—.</em></p>
+<p>The four attributes the ship starts with are at 0x41E4: two halves of the helicopter in white, and two more below, one white and one red.</p>
+<h2 id="the-sound">The sound</h2>
+<p>Three channels of ten bytes each from 0xE010:</p>
+<table><tr><th></th><th></th></tr><tr><td>+0</td><td>what is left of the note</td></tr><tr><td>+1</td><td>the duration</td></tr><tr><td>+2</td><td>the sound number, which is what priority looks at</td></tr><tr><td>+3/+4</td><td>the track pointer</td></tr><tr><td>+5</td><td>the octave</td></tr><tr><td>+6</td><td>the volume</td></tr><tr><td>+8</td><td>the envelope</td></tr><tr><td>+9</td><td>the chained sound</td></tr></table>
+<p>A sound can take one, two or three channels, and its number decides: below 0x89 one, from 0x89 to 0x8C two, from 0x8D up three (0x5CAC).</p>
+<p>The twelve periods in the table at 0x5E55 are <b>one byte each</b>: they are the top octave, and the lower ones come out by doubling the period (0x5E43).</p>
+<p>These 269 bytes are close relatives of Athletic Land&#x27;s: see <a href="FINDINGS.html">Findings</a>.</p>
+<h2 id="what-it-is-made-of">What it is made of</h2>
+<table><tr><th></th><th>bytes</th><th></th></tr><tr><td>traced code</td><td>5,783</td><td>70.59 %</td></tr><tr><td>identified data</td><td>2,409</td><td>29.41 %</td></tr><tr><td><b>unexplained</b></td><td><b>0</b></td><td><b>0.00 %</b></td></tr></table>
+<p>The cartridge has only three gaps: twelve zeros in the header (0x4004), ten at 0x506D and <b>twelve 0xFF bytes from 0x5FF4 to 0x5FFF</b>, behind the end of the last sound track.</p>
+<footer><p><em>Super Cobra</em> was published by Konami for the MSX; its catalogue number is RC-705 and it is 8 KB. All rights in the game remain with their holders. This is preservation, study and documentation work.</p></footer></div>

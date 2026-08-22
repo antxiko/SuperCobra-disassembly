@@ -1,0 +1,1628 @@
+# Anotaciones de Super Cobra (Konami, MSX1, cartucho RC-705).
+#
+# Cada linea va anclada a una direccion, asi que los comentarios sobreviven a
+# un retrazado. Directivas: L=etiqueta, C=comentario de linea, B=cabecera de
+# bloque, D=rango de datos, F=anchura de las filas de un bloque de datos. Todo
+# sale de leer el codigo que lo usa. Sin acentos a proposito.
+#
+# EL MAPA DE MEMORIA. Cartucho de 8 KB en la pagina 1 (0x4000-0x5FFF), con la
+# RAM del juego a partir de 0xE000. INIT (0x407D) borra
+# 0xE000-0xF7FF, pone la pila en 0xF800, instala la interrupcion en el gancho
+# H.KEYI (0xFD9A) y se queda en `jr $` (0x40AD): a partir de ahi el juego
+# entero corre DENTRO de la interrupcion (0x402B). Es el armazon B de Konami,
+# el mismo de Athletic Land, Antarctic Adventure y Monkey Academy.
+#
+# EL DESPACHADOR. 0x4050 no salta a una tabla externa: coge la direccion de
+# retorno con `pop hl` y la usa como base, asi que la tabla va pegada detras
+# del `call` y no se vuelve a ella. Solo hay dos:
+#   0x46AD  15 palabras, indice = (0xE000)         el estado del juego
+#   0x516F   8 palabras, indice = (0xE003) and 7   el submodo de la partida
+#
+# ESTE CARTUCHO NO LLEVA LA MARCA OCULTA DE KONAMI (el RC-7xx y el titulo en
+# katakana al final de la ROM, que descubrio Manuel Pazos). Solo hay 12 bytes
+# de relleno 0xFF, de 0x5FF4 a 0x5FFF, y el ultimo byte con contenido (0x5FF3)
+# es el final de la ultima pista de sonido. El "RC-705" sale del catalogo, no
+# del binario.
+
+# ---------------------------------------------------------------------------
+# Los bloques de datos
+# ---------------------------------------------------------------------------
+D 0x4000 0x4010 cabecera  Los dieciseis bytes que lee la BIOS al arrancar la maquina: "AB", INIT=0x407D, y los otros tres punteros a cero. Este cartucho no declara STATEMENT, ni DEVICE, ni TEXT.
+D 0x46AD 0x46CB tabla_de_estados  Las quince palabras del despachador de 0x4050, pegadas detras del `call` de 0x46AA. El indice es (0xE000).
+F 0x46AD 2
+D 0x4830 0x4838 registros_del_vdp  Los ocho registros del VDP. 0x4813 los copia a 0xE038 y los escribe uno a uno con `call 0x401A` subiendo D de 0x80 a 0x87: R0=0x02, R1=0xE2, R2=0x0E, R3=0x7F, R4=0x07, R5=0x76, R6=0x03, R7=0xE1. Es SCREEN 2 con sprites de 16x16.
+F 0x4830 8
+D 0x48ac 0x48b4 tabla_de_teclas_de_menu  Las ocho teclas de la fila 0 del teclado, traducidas: 0x4899 entra aqui con la tecla ya reducida a 0-7 y saca de esta tabla lo que devuelve.
+F 0x48ac 8
+D 0x490d 0x490f vidas_al_empezar  Los dos bytes con los que arranca cada jugador, `03 01`, que 0x48EA copia a 0xE050: tres vidas y el 1 de la primera zona.
+D 0x4ae8 0x4c8d rotulos_de_pantalla  Los rotulos con su direccion de VRAM delante: HI, ZONE, 1P, 2P (0x4AE8), PLAY SELECT (0x4B04), las cuatro lineas del menu en numeros de tile (0x4B10-0x4B7F), el logotipo pequeno con el ano en VRAM 0x390B (0x4B80), GAME OVER (0x4B90), PLAYER 1 (0x4B9D) y VIDEO CARTRIDGE (0x4BAA). Ocho `ld hl,nn` los apuntan.
+D 0x4cfa 0x4d8d logo_konami_grande  El logotipo KONAMI de 26 tiles comprimido, identico byte a byte al de Athletic Land 0x4BD8. Lo lee 0x4CAB.
+D 0x516F 0x517F tabla_de_submodos  Las ocho palabras del despachador de 0x4050, pegadas detras del `call` de 0x516C. El indice es (0xE003) and 7, o sea que los ocho submodos se turnan uno por fotograma. La tabla acaba en 0x517E: lo que hay en 0x517F ya es codigo, la rutina que mueve la nave, y la llama 0x50CC.
+F 0x516F 2
+
+D 0x5036 0x5078 rotulos_de_fase  Rotulos con direccion de VRAM, entre ellos 900 MILES CLEARED en VRAM 0x3929 (0x505A). Los leen 0x4EAB, 0x524C, 0x4FC8, 0x5091 y 0x5012, y 0x4A06 lee un byte suelto de 0x503A con `ld a,(nn)`.
+
+
+# ===========================================================================
+# EL ARMAZON: lo que este cartucho comparte con Athletic Land
+# ===========================================================================
+# Las etiquetas y los comentarios de este tramo salen de comparar los dos
+# binarios con tools/porta_notas.py y de releer cada instruccion aqui. Donde
+# el dato cambia -y cambia- manda lo medido en ESTE cartucho.
+
+B 0x4010 Las rutinas de video, identicas a las de Athletic Land 0x401C
+L 0x4010 VPEEK             Lee en A el byte de la VRAM DE
+C 0x4010 Sin interrupciones desde que se pone la direccion hasta que se lee el dato
+C 0x4011 Sin poner el bit 6 de D: direccion de LECTURA de la VRAM
+C 0x4014 Dos nop de margen entre mandar la direccion y leer el puerto de datos
+C 0x4016 Puerto 0x98: el byte de la VRAM
+L 0x401A VDP_DIRECCION     Manda DE al VDP como direccion (con el bit 6 de D a 1 es de escritura)
+L 0x4021 HL_MAS_A          HL = HL + A, sin signo
+L 0x4026 DE_MAS_A          DE = DE + A, sin signo
+
+B 0x402B Cada fotograma: el sonido, y un paso del juego si el anterior ya acabo
+L 0x402B INTERRUPCION      El gancho H.KEYI. El juego entero corre aqui dentro
+C 0x402C Leer el estado del VDP baja la peticion de interrupcion
+C 0x402E El sonido va antes del candado: suena aunque el paso anterior siga a medias
+C 0x4031 0xE005 es el candado: mientras no sea cero, no se entra otra vez
+C 0x4038 Se echa el candado y se abren las interrupciones: un paso del juego dura mas de un fotograma y el sonido tiene que seguir sonando por encima
+
+B 0x407D INIT: lo que llama la BIOS al encontrar la cabecera AB
+L 0x407D INIT              Deja la maquina lista y se queda quieto: todo pasa en la interrupcion
+C 0x4083 Borra de 0xE000 a 0xF7FF: toda la RAM que usa el juego, a cero
+C 0x4090 C3 = jp; el gancho H.KEYI queda como `jp 0x402B`
+C 0x409B Candado echado mientras dura el arranque: la interrupcion no ejecuta pasos
+C 0x40AD Y aqui se queda para siempre. El hilo principal no hace nada mas
+
+B 0x4838 Los mandos: joystick por el PSG o teclado por el PPI, segun 0xE002
+L 0x4838 PUERTO_DEL_JOYSTICK  Registro 15 del PSG: joystick 1 o joystick 2 segun el bit 7 de 0xE002
+C 0x483D 0x8F elige el joystick 1; con el bit 6 puesto (0xCF), el 2
+L 0x484B LEE_MANDOS        0xE009 = lo pulsado ahora, 0xE008 = lo del fotograma anterior
+C 0x484E El bit 4 de 0xE002 elige teclado (0x4863) en vez de joystick
+C 0x4852 Registro 14 del PSG: el joystick que haya dejado elegido 0x4838
+C 0x4859 Seis bits: cuatro direcciones y dos botones
+C 0x485B 0xE009 es lo pulsado ahora; 0xE008, lo del fotograma anterior
+C 0x485E Lo que habia en 0xE009 se aparta antes de pisarlo...
+C 0x4861 ...y baja a 0xE008; asi se puede ver el flanco del boton y no si esta pulsado
+L 0x4863 LEE_TECLADO       Arma con las filas 7 y 8 del teclado el mismo byte que da el joystick
+C 0x4863 B = 0x57 y C = 0xAA: escribe la fila 7 en el puerto del PPI
+C 0x486C SELECT (bit 6 de la fila 7) al bit 5: el segundo boton
+C 0x486F Y ahora la fila 8: espacio y las cuatro flechas
+C 0x4878 IZQUIERDA al bit 2
+C 0x4880 DERECHA al bit 3 y ESPACIO al bit 4
+C 0x4886 ARRIBA al bit 0 y ABAJO al bit 1
+C 0x4889 Y a guardar en 0xE009/0xE008 por el mismo sitio que el joystick
+
+B 0x488B La fila 0 del teclado, para las teclas que no son de jugar
+L 0x488B LEE_TECLAS_DE_MENU  Devuelve en A la tecla de la fila 0, ya convertida por la tabla de 0x48AC
+C 0x488B Fila 0 del teclado: 0 a 7
+C 0x4892 Solo los bits 1 a 4, y se bajan uno: quedan las teclas 1, 2, 3 y 4
+C 0x4896 De 8 en adelante, nada que hacer
+C 0x4899 Y el numero se traduce por la tabla de 0x48AC
+
+B 0x4CBF El logotipo KONAMI grande, subido a la pantalla una fila por llamada
+L 0x4CBF SUBE_LOGOTIPO     Una fila del KONAMI grande por llamada, de abajo arriba
+C 0x4CBF 0xE00E es el cursor: cuanto lleva subido el logotipo, en bytes de VRAM
+C 0x4CC2 Una fila entera de la tabla de nombres son 32 bytes
+C 0x4CCB Desde 0x3AAA hacia arriba; la primera vez sale 0x3A8A, fila 20 y columna 10
+C 0x4CD1 Los 26 tiles del logotipo van seguidos desde el 0x60
+C 0x4CD3 Tres tiles arriba, once en medio y doce abajo: asi esta partido el KONAMI grande
+C 0x4CE6 0xE00A cuenta las filas que quedan; el `dec` deja el z que mira el llamador
+L 0x4CEB PINTA_TILES_SEGUIDOS  B tiles consecutivos desde el A, en la VRAM DE; al salir, DE en la fila de debajo
+C 0x4CF0 El codigo del tile sube con la columna
+C 0x4CF4 Se recupera el principio de la fila y se le suman 32: DE baja una fila
+
+L 0x4A6D CIERRA_EL_BUCLE_DE_VRAM  El final compartido de LLENA_VRAM y VUELCA_VRAM: descuenta BC y devuelve las interrupciones
+B 0x4A74 Copiar de VRAM a VRAM, byte a byte
+L 0x4A74 COPIA_VRAM_A_VRAM  BC bytes de la VRAM DE a la VRAM HL
+C 0x4A74 Un byte de la VRAM DE...
+C 0x4A78 ...a la VRAM HL; VPEEK y VPOKE mandan la direccion cada vez
+
+# ===========================================================================
+# Las utilidades que usa todo el cartucho
+# ===========================================================================
+
+B 0x4048 Escribir en la VRAM, y el despachador con la tabla pegada detras
+L 0x4048 VPOKE             Escribe A en la VRAM DE
+C 0x4049 0x4A3D pone la direccion con el bit 6 de D a 1: escritura
+L 0x4050 DESPACHA          Salta a la entrada A de la tabla que va PEGADA detras del `call`
+C 0x4050 Dos bytes por entrada
+C 0x4051 El `pop` no deshace la llamada: coge la direccion de retorno para usarla como base de la tabla. Por eso la tabla va pegada detras del `call` y por eso no se vuelve nunca aqui
+C 0x4059 Y se salta a la rutina, sin `call`: lo que quede en la pila manda al `ret`
+L 0x405A INTERCAMBIA       Cambia entre si los B bytes de HL y los de DE
+C 0x405A El byte de HL se aparta en C mientras entra el de DE
+
+B 0x4064 El pintor de la pantalla. La misma rutina pinta y borra: lo decide C
+L 0x4064 BORRA_DIBUJO      Recorre el dibujo de HL escribiendo CEROS: lo borra
+C 0x4064 C = 0x00, asi que el `and c` de 0x4076 deja siempre 0
+L 0x4068 PINTA_DIBUJO      Vuelca el dibujo de HL en la VRAM
+C 0x4068 C = 0xFF, asi que el `and c` de 0x4076 deja el byte tal cual
+L 0x406A PINTA_TRAMO       Toma del flujo la direccion de VRAM y va soltando bytes
+C 0x406A Los dos primeros bytes del tramo son la direccion de la VRAM
+C 0x406E 0xFF cierra el dibujo entero (el `inc b` lo deja a cero)
+C 0x4073 0xFE cierra el tramo: se vuelve arriba a por otra direccion de VRAM
+C 0x4076 Aqui esta el truco: `and c` con 0xFF deja el byte y con 0x00 lo borra
+
+# ===========================================================================
+# La rutina que se ejecuta en la RAM
+# ===========================================================================
+# 0x412B copia siete bytes de 0x41DD a 0xE5F8 y desde entonces se los llama
+# como rutina. Montados alla, son:
+#
+#     E5F8:  32 FD E5     ld (0E5FDh),a
+#     E5FB:  DD 70 00     ld (ix+000h),b
+#     E5FE:  C9           ret
+#
+# 0xE5FD es el tercer byte de `ld (ix+000h),b`, o sea SU PROPIO
+# DESPLAZAMIENTO. La rutina se escribe encima el desplazamiento con A y
+# entonces guarda B. Es `ld (IX+A),B`, que el Z80 no sabe hacer: el
+# desplazamiento de IX es un byte fijo del opcode, no un registro. Por eso hay
+# que ejecutarla en RAM, y por eso son los unicos siete bytes de este cartucho
+# que no corren desde la ROM.
+
+D 0x41dd 0x41e4 rutina_para_la_ram  Los siete bytes que 0x412B copia a 0xE5F8 para poder hacer `ld (IX+A),B` automodificandose el desplazamiento. Son el unico codigo del cartucho que no se ejecuta desde la ROM.
+F 0x41dd 7
+
+B 0x4106 El arranque de una partida: se monta en la RAM el mapa por el que se vuela
+L 0x4106 MONTA_EL_MAPA     Construye en 0xE660 y siguientes el terreno de la fase
+C 0x4108 0xE660 en adelante: doce tandas (C) de ocho bytes (B)
+C 0x4118 El relleno sube de 0xF9 en adelante, y se salta el 0xFB y el 0x05
+C 0x4128 Y aqui se copia a 0xE5F8 la rutina que hace `ld (IX+A),B`
+C 0x4133 C = 0x80 es el relleno. De aqui a 0x417D se montan DOS decorados enteros y simetricos: el de abajo en 0xE800/0xEA00 y el de ARRIBA en 0xEC00/0xEE00
+C 0x413B El suelo: el dibujo 0x4560 en las dos paginas de abajo, 0xE8B6 y 0xEAB6
+C 0x414A Y aqui empieza el TECHO: 0x14B bytes de relleno en 0xECBB para asentarlo
+C 0x415D `ld l,0C9h` cambia solo el byte bajo: 0xECC9, y el dibujo es el 0x4560, el mismo del suelo
+C 0x4168 La segunda pagina del techo, 0xEE00, con el relleno puesto a mano
+
+B 0x4626 El desplegador: lee un dibujo comprimido y lo escribe en la RAM
+L 0x4626 DESPLIEGA         Escribe en el buffer de HL el dibujo comprimido de DE
+C 0x4626 IX se queda apuntando cinco bytes mas alla del destino
+C 0x462F 0xFF cierra el dibujo
+C 0x4633 0x50 es un salto de linea: se vuelve arriba sin escribir nada
+C 0x4649 `ld (IX+A),B` por la rutina de la RAM (ver 0x41DD): el Z80 no lo tiene
+C 0x4655 Cinco por vuelta, que es el ancho de la ficha
+C 0x4675 0xFF tambien cierra este tramo
+C 0x4688 Dos veces `dec h`: el buffer sube de dos en dos paginas
+
+B 0x4691 El paso del juego: un fotograma
+L 0x4691 UN_PASO           Cuenta el fotograma, elige el lector de mandos y despacha por el estado
+C 0x4691 0xE003 cuenta fotogramas y ademas es el indice del submodo (0x516C)
+C 0x4695 El bit 6 de 0xE002 es que hay partida en curso
+C 0x469A Jugando, 0x49EA: hacer parpadear el rotulo del jugador
+C 0x469F Y fuera de partida, leer las teclas del menu (0x488B)
+C 0x46A2 0xE000 es el estado del juego: la entrada de la tabla de 0x46AD
+C 0x46A9 Este `push` NO es para el despachador: 0x4050 saca su retorno con `pop` y termina en `jp (hl)`, asi que lo que queda encima de la pila es esta direccion y el `ret` de la rutina del estado aterriza en el lector de mandos
+C 0x46A7 El estado 8 es el unico que se salta el `push`: su `ret` vuelve al llamador
+
+# ===========================================================================
+# LOS QUINCE ESTADOS. La tabla de 0x46AD, indexada por 0xE000
+# ===========================================================================
+# Casi todos acaban en el mismo par de lineas: 0x4742 pone A en 0xE004 -el
+# temporizador- y cae en 0x4745, que sube 0xE000 y pasa al estado siguiente.
+# Los que esperan miran 0xE004 con `dec (hl) / ret nz`: hasta que no llega a
+# cero, el estado no avanza.
+#
+# LOS DOS JUGADORES. 0xE050 son los 32 bytes del jugador que esta jugando y
+# 0xE080 los del otro; el primer byte de cada uno arranca en 3 (0x48EA lo
+# carga con `03 01`) y baja de uno en uno en 0x470E. El estado 13 (0x4778)
+# cambia el turno: intercambia los dos bloques con INTERCAMBIA y de paso
+# invierte el bit 7 de 0xE002, que es el que decide en 0x4838 que joystick se
+# lee. Un solo juego, dos marcadores, y el que manda siempre esta en 0xE050.
+
+L 0x46CB ESTADO_00_ARRANQUE     Sube los registros del VDP y deja la pantalla puesta
+C 0x46D4 Y al estado siguiente por 0x4745
+
+L 0x46D6 ESTADO_01_LOGOTIPO     Sube el KONAMI grande una fila cada dos fotogramas
+C 0x46D6 El bit 0 de 0xE003 al carry: solo se mueve en los fotogramas pares
+C 0x46DB Mientras SUBE_LOGOTIPO no diga que ha terminado, no se sigue
+C 0x46DF Y ya arriba, el rotulo VIDEO CARTRIDGE
+C 0x46E5 0x20 fotogramas de espera antes del estado siguiente
+
+L 0x46E9 ESTADO_02_ESPERA       Descuenta 0xE004 y no hace nada mas
+L 0x46EE ESTADO_03_PASA         Pasa de largo al estado siguiente
+L 0x46F0 ESTADO_04_PANTALLA     Limpia y monta la pantalla del titulo
+C 0x46F6 Sin espera: A vale 0 y ese es el temporizador que pone 0x4742
+
+L 0x46F9 ESTADO_05_ESPERA       Otra espera por 0xE004
+L 0x4700 ESTADO_06_MENU         Monta el menu de PLAY SELECT
+L 0x4724 ESTADO_07_ELIGE        Espera a que el jugador elija en el menu
+C 0x4727 Hasta que 0xE00B no deja de ser cero, aqui se sigue
+C 0x472D Elegido, salta a 0x47A2: estado 13 con 0x20 fotogramas por delante
+
+L 0x4708 ESTADO_09_VIDA_NUEVA   Descuenta una vida y anuncia de quien es el turno
+C 0x470E Una vida menos en el marcador del jugador activo
+C 0x4712 El bit 5 de 0xE002 dice si hay dos jugadores; con uno solo no se anuncia
+C 0x4719 El rotulo PLAYER 1, que 0x47ED convierte en PLAYER 2 si toca
+C 0x471F 0x50 fotogramas leyendo el rotulo (0x4F y el `inc a` de 0x4721)
+
+L 0x472F ESTADO_10_EMPIEZA      Borra el anuncio y suelta al jugador
+C 0x4732 Hasta que no se acaba la espera del anuncio, nada
+C 0x4734 BORRA_DIBUJO sobre el mismo rotulo que se pinto: lo quita
+C 0x473D 0xE06F distinto de cero mientras el jugador siga vivo
+L 0x4742 PONE_ESPERA_Y_AVANZA   Deja A en 0xE004 y pasa al estado siguiente
+L 0x4745 AVANZA_ESTADO          Sube 0xE000: el siguiente fotograma va otra rutina
+
+L 0x474A ESTADO_11_JUGANDO      El juego. Aqui se esta hasta que 0xE06F se apaga
+C 0x474A 0x50C2 es un paso de partida entero
+C 0x474D Mientras 0xE06F no sea cero se sigue jugando; a cero, se avanza
+
+L 0x4754 ESTADO_12_MUERTO       Mira si al jugador activo le quedan vidas
+C 0x4754 Si el marcador no esta a cero, aun le quedan: por 0x476E
+C 0x475D El rotulo GAME OVER
+
+L 0x4778 ESTADO_13_CAMBIA_TURNO  Cambia los dos marcadores de sitio y de mando
+C 0x4778 Los 32 bytes de 0xE050 y los de 0xE080 se cambian entre si...
+C 0x4787 ...y el bit 7 de 0xE002 tambien, que es el joystick que lee 0x4838
+
+L 0x478C ESTADO_14_FIN          Fin de partida, salvo que el otro jugador siga vivo
+C 0x4791 Si al otro le quedan vidas, se le devuelve el turno
+C 0x479B Se apaga el bit 6 de 0xE002 antes de volver al principio
+L 0x47A0 VUELVE_AL_TURNO        Estado 13 con 0x20 fotogramas de margen
+
+L 0x47B0 ESTADO_08_DEMO         El unico al que se entra sin `push`: su `ret` vuelve al llamador
+C 0x47C1 Un sonido antes de arrancar la demostracion
+C 0x47C6 0xE001 lleva la cuenta de por donde va la demostracion
+
+L 0x47CB CUENTA_Y_PARPADEA      Descuenta 0xE004 y hace parpadear la linea elegida del menu
+C 0x47D2 El bit 3 del temporizador: ocho fotogramas encendido y ocho apagado
+C 0x47DE Sin el bit 4 de 0xE002 se suma 0x40: la otra pareja de lineas del menu
+C 0x47E4 VRAM 0x3A00 y pico: la fila del menu, 32 bytes que se borran
+
+L 0x47ED PINTA_ROTULO_DEL_JUGADOR  Pinta el dibujo de HL y, si juega el segundo, le cambia el 1 por el 2
+C 0x47F4 Con el bit 7 de 0xE002 apagado juega el primero y no hay nada que cambiar
+C 0x47F5 0x32 es el '2' en ASCII, encima del '1' que acaba de pintar
+
+# ===========================================================================
+# EL PASO DE PARTIDA
+# ===========================================================================
+
+B 0x50C2 Un fotograma de partida, de principio a fin
+L 0x50C2 PASO_DE_PARTIDA   Mueve la nave, la dibuja, mira los choques y corre el decorado
+C 0x50C2 0xE50E distinto de cero es que la nave esta reventando: por 0x5BE5
+C 0x50C9 0xE7D0 lleva la posicion de la nave: H la columna, L la fila
+C 0x50D1 Se guarda ya movida...
+C 0x50D8 ...y 0xE7D4 es la misma con 0x10 mas en la columna: el segundo sprite, que es la mitad de atras de la nave
+C 0x50DB 0xE54B es en que anda la nave: 0 volando, 1 aterrizando, 2 quieta
+C 0x50E5 0xFC0C sumado: doce filas mas arriba y cuatro columnas a la izquierda
+C 0x50EF Pasada la columna 0x79 el disparo ya no cabe en pantalla
+C 0x50F7 VRAM 0x3B30: las fichas de sprite, ocho bytes por tanda
+C 0x5108 El bit 7 de 0xE012 apaga el zumbido del motor
+C 0x510C Por debajo de 0x10 de combustible (0xE51C), el aviso
+C 0x5115 Los dos bits bajos de 0xE053 reparten el sonido entre fotogramas
+C 0x5123 Solo se manda el sonido si ha CAMBIADO: si no, se estaria reiniciando el mismo efecto sesenta veces por segundo
+C 0x5126 0xE514 cuenta los fotogramas de la fase
+C 0x512A Entre las columnas 0x99 y 0xA1 no se miran choques: es el paso de fase
+C 0x5139 Tres comprobaciones de choque en cadena; a la primera que da carry, se corta
+C 0x5146 Con carry, la nave ha chocado: por 0x5BD6
+C 0x5152 Los dos buffers del decorado, 0xE620 y 0xE720, uno por fotograma alterno
+C 0x516A Los tres bits bajos del contador de fotogramas: ocho submodos que se van turnando, uno por fotograma
+
+B 0x517F Mover la nave con el mando
+L 0x517F MUEVE_LA_NAVE     Aplica el mando a HL: H es la columna y L la fila
+C 0x517F Con 0xE54B a 2 la nave esta quieta y el mando no la mueve
+C 0x5185 Y con 0xE560 puesto baja sola, sin mando
+C 0x518D 0xE009 es lo que se esta pulsando ahora, ya venga del joystick o del teclado
+C 0x5190 Bit 0, arriba: una fila menos
+C 0x5194 Bit 1, abajo: una fila mas
+C 0x5198 Bit 2, izquierda: una columna menos
+C 0x519C Bit 3, derecha: una columna mas
+C 0x51A0 Los topes se ponen deshaciendo el paso que se acaba de dar
+C 0x51A1 La columna no pasa de 0x77...
+C 0x51A6 ...ni baja de 3
+C 0x51AB Y la fila nunca llega a 0: en la de arriba esta el marcador
+
+# ===========================================================================
+# LOS OCHO SUBMODOS. La tabla de 0x516F, indexada por (0xE003) and 7
+# ===========================================================================
+# No son estados que se sucedan: son ocho trabajos que se turnan, uno por
+# fotograma, porque no cabe hacerlos todos en el mismo. El indice es el
+# contador de fotogramas, asi que cada uno le toca una vez de cada ocho.
+#
+# EL COMBUSTIBLE, de principio a fin: el submodo 3 (0x5291) baja 0xE51C una
+# vez cada 64 fotogramas -le toca uno de cada ocho, y ademas exige que los
+# bits 2 a 5 del contador esten a cero-. Cuando el `dec` pasa de cero, se
+# deshace y se pone 0xE560 a 1; y 0xE560 puesto es, en MUEVE_LA_NAVE
+# (0x5185), lo que hace que la nave baje sola sin tocar el mando. Quedarse sin
+# combustible no mata: hace que la nave se caiga.
+#
+# EL DECORADO VA A DOBLE BUFFER. 0xE50D alterna entre 0 y 1 con un `xor 1`, y
+# de ahi sale la pagina: 0xE800 con el 0 y 0xEA00 con el 1 (`add a,a` mas
+# 0xE8). Mientras uno se vuelca a la VRAM, el otro se esta montando.
+
+L 0x520F SUBMODO_0_VUELCA   Cambia de buffer y sube el decorado a la pantalla
+C 0x5212 0xE50D es que buffer toca: se le da la vuelta cada vez
+C 0x5219 0 da 0xE800 y 1 da 0xEA00: la pagina del buffer que ahora se lee
+C 0x521F VRAM 0x3A00, 0xA0 bytes: las cinco filas de decorado
+C 0x522C Los dos bits bajos de 0xE053 dicen que clase de zona es esta
+C 0x523D 0xE50B contra 0xBB: la nave esta en el sitio exacto donde se pasa de fase
+C 0x524C Los ocho bytes de 0x5036 al buffer de fichas: el rotulo de la fase
+C 0x525A 0xE54A puesto es que hay algo que rematar en el rotulo
+C 0x526B 0xD1 es el tile que se planta arriba y cuatro filas mas abajo
+
+L 0x5275 SUBMODO_2_Y_6     Mueve la llama del motor y luego lo que vuela; le toca dos veces de cada ocho
+L 0x5278 SUBMODO_4         La entrada del submodo 4, tres instrucciones mas adentro: mueve lo que vuela SIN tocar la llama del motor. Es la unica entrada de la tabla de 0x516F que no cae en el principio de una rutina
+C 0x5282 Estas dos instrucciones repiten las dos de 0x5278: B ya valia 4 y HL ya valia 0xE7E4, y en medio solo hay lecturas. Cinco bytes que no cambian nada, se entre por donde se entre
+C 0x5287 Zona de clase 0: por 0x58E6
+C 0x528B Clase 1: por 0x593A; las demas, por 0x59BB
+
+L 0x5291 SUBMODO_3_COMBUSTIBLE  Gasta combustible y, al acabarse, suelta la nave
+C 0x5296 De la fase 3 en adelante hay ademas lo que monta 0x5851
+C 0x5299 Con 0xE058 puesto no se gasta: la partida esta detenida
+C 0x529E Los bits 2 a 5 del contador de fotogramas a cero: una vez cada 64
+C 0x52A4 0xE51C es el combustible que queda
+C 0x52A8 Si el `dec` no ha pasado de cero, no hay nada mas que hacer
+C 0x52AB Se devuelve el byte a cero -no se deja en 0xFF- y...
+C 0x52AC ...0xE560 a 1, que en 0x5185 es lo que hace bajar la nave sola
+
+L 0x52B4 SUBMODO_5_DISPAROS  Suelta lo que dispara el decorado
+C 0x52B7 Con la partida detenida, nada
+C 0x52BD Tres bits del contador: no en todos los fotogramas que le tocan
+
+L 0x52CD SUBMODO_7_DIFICULTAD  Lo que sale a por la nave, y cada vez antes
+C 0x52D3 0xE55B a cero
+C 0x52D9 Dos bits del contador de fotogramas: el reloj de esta comprobacion
+C 0x52DC De la fase 3 en adelante la cuenta sube; antes de la 3, es cero
+C 0x52E4 Y de la fase 15 no pasa: 0x0C es el tope de la dificultad
+C 0x52EA El doble de eso contra el reloj: cuanto mas avanzada la fase, mas veces sale
+C 0x52F5 Y otra vez la clase de zona reparte el trabajo entre tres rutinas
+
+# ===========================================================================
+# EL MARCADOR
+# ===========================================================================
+# Todo va en BCD, con `daa` detras de cada suma, y en tres bytes por marcador:
+#   0xE040-0xE042   el record
+#   0xE043-0xE045   los puntos del jugador 1
+#   0xE046-0xE048   los del jugador 2
+#   0xE052          cuanto le falta para la siguiente vida extra
+# El byte que se compara es siempre el ALTO, asi que la vida extra cae de
+# 20.000 en 20.000: el umbral sube `add a,002h` en BCD sobre ese byte.
+
+B 0x48DD Empezar una partida: borrar la RAM del juego y repartir vidas
+L 0x48DD EMPIEZA_PARTIDA   Borra de 0xE043 a 0xE7FF y deja a cada jugador con sus tres vidas
+C 0x48DD De 0xE043 en adelante: los marcadores y todo lo que hay debajo
+C 0x48E0 0x7BC bytes, o sea hasta 0xE7FF; el record (0xE040) NO se borra
+C 0x48EA Los dos bytes de 0x490D, `03 01`, al marcador del jugador activo: tres vidas
+C 0x48FB El bit 5 de 0xE002 es que juegan dos...
+C 0x4901 ...y entonces los 32 bytes del jugador se copian tal cual al segundo
+
+L 0x4919 APAGA_LOS_SPRITES  Un 0xD0 en la primera ficha: el VDP deja de pintar de ahi para abajo
+
+B 0x4921 Sumar puntos, dar vidas extra y llevar el record
+L 0x4921 SUMA_PUNTOS       Suma DE al marcador del jugador, en BCD
+C 0x4921 El bit 6 de 0xE002, subido al 7 por el `add a,a`: sin el no se puntua, que es lo que pasa mientras corre la demostracion
+C 0x4926 El acarreo del `add a,a` trae el bit 7: 0xE043 el primer jugador, 0xE046 el segundo
+C 0x492E Byte bajo, y `daa` porque el marcador es BCD
+C 0x4934 Byte de en medio, con el acarreo
+C 0x493B Byte alto, que solo recibe el acarreo
+C 0x4940 Sin acarreo aqui no hay desbordamiento y se sigue por 0x494F
+C 0x4942 Pasado el 999999, lo que se planta en el maximo es EL RECORD
+C 0x4945 (0xE040-0xE042); los puntos del jugador dan la vuelta y siguen
+L 0x494F MIRA_VIDA_EXTRA   0xE052 es el proximo escalon: al alcanzarlo, una vida mas
+C 0x494F Se compara el byte ALTO del marcador, asi que el escalon son decenas de millar
+C 0x4957 El siguiente escalon, 2 mas en BCD: la vida extra cae cada 20.000 puntos
+C 0x495C Y al pasarse, 0xFF: ya no hay mas vidas extra en esa partida
+C 0x4961 La vida
+C 0x4968 Y el sonido de haberla ganado
+L 0x496F MIRA_EL_RECORD    Si el marcador ha pasado al record, lo sustituye
+C 0x496F Primero el byte alto de los dos
+C 0x4976 Si es distinto y no hay acarreo, el jugador va por delante y ya esta
+C 0x4978 Iguales por arriba, hay que mirar los dos bytes de abajo
+C 0x497F Y el record pasa a ser el marcador de este jugador
+
+L 0x4989 PINTA_EL_MARCADOR  Sube a la pantalla los rotulos HI, ZONE, 1P y 2P
+
+B 0x48B4 Montar la pantalla del titulo
+L 0x48B4 MONTA_EL_TITULO   Sube la fuente, el logotipo grande y el rotulo de abajo
+C 0x48C5 VIDEO CARTRIDGE, el rotulo del pie
+C 0x48CB Ocho tandas de 0x1F8 bytes con el mismo 0x60 en la VRAM 0x4038: pinta de un color de golpe toda la tabla de color
+
+# ===========================================================================
+# Pintar el marcador en la pantalla
+# ===========================================================================
+
+L 0x498F PINTA_MARCADOR_ENTERO  Los rotulos, los dos marcadores, el record, la zona y las vidas
+C 0x4992 El bit 5 de 0xE002: con un solo jugador no se pinta el marcador del otro
+C 0x499F Se le da la vuelta al bit del jugador para pintar el del contrario
+C 0x49AA El record, 0xE040-0xE042, en la VRAM 0x3AD8
+L 0x49B6 PINTA_PUNTOS      El marcador del jugador que diga el bit 7 de A
+C 0x49BC El acarreo saca el bit 7: el primero en 0x3AC4, el segundo en 0x3ACE
+L 0x49C4 PINTA_BCD         Pinta B bytes BCD de HL hacia atras, en la VRAM DE
+C 0x49C8 La zona en curso, un solo byte, en la VRAM 0x3AF0
+C 0x49D1 El nibble bajo se aparta en C...
+C 0x49D4 ...y el `xor` con el byte entero deja el alto, que cuatro `rra` bajan
+C 0x49D9 `or 0x30` convierte la cifra en su tile: los digitos empiezan en el 0x30
+C 0x49E5 Se avanza en la VRAM y se retrocede en la RAM: el BCD va al reves
+
+L 0x49EA PARPADEA_EL_JUGADOR  Enciende y apaga el rotulo 1P/2P mientras se juega
+C 0x49EA L es 0xE002, las banderas, y H es 0xE003, el contador de fotogramas
+C 0x49ED Los cinco bits bajos a cero: esto solo pasa una vez cada 32 fotogramas
+C 0x49F2 Y el bit 5 del contador decide: C queda a 0 o a 0xFF...
+C 0x49F7 El bit 7 de las banderas dice cual de los dos rotulos, 1P o 2P
+C 0x4A01 ...y se entra en el pintor por 0x406A, saltandose las dos puertas: con C a 0xFF pinta y con C a 0 borra. El parpadeo es la misma rutina
+
+L 0x4A04 PINTA_LAS_VIDAS   Cinco huecos en la VRAM, de derecha a izquierda
+C 0x4A07 Las vidas que le quedan al jugador activo
+C 0x4A0D 0x9C es el tile de la navecita del marcador
+C 0x4A0F Gastadas las vidas, el resto de los huecos se pintan con el tile 0
+
+L 0x4A1B PINTA_DOS_FILAS   Dos filas de tiles seguidos, 0x0F cada una
+C 0x4A1D VRAM 0x38A9, y la segunda en 0x38C9: una fila mas abajo
+
+B 0x4A3D Las rutinas de fondo del VDP
+L 0x4A3D VDP_ESCRITURA     Como VDP_DIRECCION, pero poniendo el bit 6: para escribir
+C 0x4A3D A se guarda en A' para no pisarlo: la direccion se manda con DE
+L 0x4A47 BORRA_LA_PANTALLA  Apaga los sprites y deja a cero la tabla de nombres
+C 0x4A4A 0x300 bytes desde la VRAM 0x7800: las 24 filas de los tres tercios
+L 0x4A51 LLENA_VRAM        BC bytes con el valor A, desde la VRAM DE
+C 0x4A55 Dos `ex af,af'` seguidos no cambian nada: son el margen que el VDP necesita entre escritura y escritura, gastado sin tocar registros
+L 0x4A61 VUELCA_VRAM       Lo mismo, pero tomando cada byte de HL
+
+# ===========================================================================
+# Montar la pantalla: los tres tercios, la fuente de la BIOS y los rotulos
+# ===========================================================================
+# La SCREEN 2 del MSX son tres tercios de pantalla, cada uno con su tabla de
+# patrones y su tabla de color. Este cartucho monta el primero y luego copia
+# los otros dos de el, en la propia VRAM, sin volver a leer la ROM.
+
+L 0x4A84 REPITE_LOS_PATRONES  Copia el tercio de arriba de la tabla de patrones en los otros dos
+C 0x4A84 De la VRAM 0x2000 a la 0x2800, y luego de la 0x2800 a la 0x3000
+L 0x4A95 REPITE_TERCIOS    Los patrones y, detras, la tabla de color
+C 0x4A98 Y lo mismo con el color, que empieza en la VRAM 0x0000
+
+B 0x4AA0 La fuente de las letras no esta en el cartucho: se copia de la BIOS
+L 0x4AA0 SUBE_FUENTE       Sube 0x180 bytes de la fuente del MSX y les da color
+L 0x4AA9 SUBE_FUENTE_COLOR  Igual, pero con el color y el desplazamiento ya puestos por el llamador
+C 0x4AAC Primero el color: 0x180 bytes seguidos desde la VRAM DE
+C 0x4AB3 La direccion 0x0004 de la ROM del BASIC es CGTBL, el puntero a la fuente del MSX. Las letras y las cifras de este juego son las de la maquina, no dibujos del cartucho
+C 0x4AB6 BC queda en 0x0180 o 0x0188: 0x180/8 = 48, o sea el caracter '0'
+C 0x4AB9 Y a D se le suman 0x20: DE pasa de la tabla de color a la de patrones
+C 0x4ABD 0x180 bytes son 48 caracteres: del '0' al '_', cifras y mayusculas
+
+B 0x4AC6 El interprete de los rotulos de 0x4AE8 y 0x5036
+L 0x4AC6 PINTA_ROTULO      Lee la direccion de VRAM y va soltando tramos hasta el 0x00
+C 0x4AC6 Los dos primeros bytes de cada tramo son la direccion de la VRAM
+C 0x4ACE Del byte de mando se aparta lo que vale sin el bit 7, que es la cuenta
+C 0x4AD4 Cuenta distinta de cero: hay tramo que pintar, por 0x4ADB
+C 0x4AD6 Y con la cuenta a cero, 0x00 cierra el rotulo y 0x80 abre otro tramo en otra direccion de la VRAM
+L 0x4ADB PINTA_TRAMO_ROTULO  Con el bit 7, C bytes seguidos de la lista; sin el, C veces el mismo
+C 0x4ADF Con el bit 7 puesto se vuelcan C bytes DISTINTOS: 0x4A69 lee uno por vuelta...
+C 0x4AE3 ...y sin el se repite UNO C veces: 0x4A61 lee el byte una sola vez y 0x4A56 lo suelta en bucle
+
+# ===========================================================================
+# El bloque grande de datos, partido por quien lo lee
+# ===========================================================================
+# CUIDADO al buscar lectores con inmediatos: `ld de,04490h` (0x40DF) y
+# `ld de,04510h` (0x40E8) NO apuntan a la ROM, son direcciones de la VRAM con
+# el bit 14 puesto -0x0490 y 0x0510 de la tabla de color-. Trocear el bloque
+# por ahi habria partido un dibujo en dos.
+
+D 0x41e4 0x41f4 fichas_de_la_nave  Las cuatro fichas de sprite con las que arranca la nave, que 0x4D9C copia a 0xE7D0. Cada una son cuatro bytes -fila, columna, dibujo y color-: (5, 0x10, 0x18, blanco), (5, 0x20, 0x20, blanco), (0x70, 0xDC, 0x28, blanco) y (0x70, 0xDC, 0x2C, rojo).
+F 0x41e4 4
+D 0x41f4 0x4248 textos_de_la_intro  Los tres carteles en ASCII, cada uno con su direccion de VRAM delante y 0xFE entre tramo y tramo: INVADE THE BASE AND / CARRY AWAY BOOTY (VRAM 0x3907 y 0x3948, lo pinta 0x4E05), INVASION SUCCEEDED (0x421D, desde 0x5C63 y 0x5C7D) y ATTACK TO NEXT BASE.
+D 0x4248 0x42d1 rotulo_del_titulo  El rotulo que 0x40BB pasa a PINTA_ROTULO al montar la pantalla del titulo.
+D 0x42d1 0x4427 tiles_del_juego  Dibujos de tile. De aqui 0x40D4 sube ocho bytes a la VRAM 0x6030, y el resto entra por los mismos sitios que la fuente. Es tambien donde cae el KONAMI pequeno de 0x43BE, los mismos 28 bytes que Athletic Land 0x492E.
+D 0x4427 0x443a dibujos_de_color_del_titulo  Dos flujos que 0x40E2 y 0x40EB despliegan seis veces cada uno, separados 0x10, sobre la tabla de color de la VRAM (0x0490 y 0x0510).
+D 0x443a 0x4560 dibujos_de_sprite  El unico flujo del cartucho que escribe en la VRAM 0x1800, que es donde R6=0x03 pone la tabla de patrones de SPRITE: 144 bytes en 0x1800 y 328 en 0x18A8. Son los dibujos de la nave, de lo que vuela y de las explosiones. Lo pasa 0x40FF a PINTA_ROTULO.
+D 0x4560 0x45e5 dibujos_del_terreno  Los cuatro dibujos que MONTA_EL_MAPA despliega en el buffer: 0x4560 (dos veces, en 0xE8B6 y 0xEAB6), 0x456A, 0x45AC y 0x45A2.
+D 0x45e5 0x4602 receta_del_terreno  Lo que 0x4190 va leyendo para saber que dibujo poner y cuantas veces: dos bits dicen la clase y el resto, el sitio.
+D 0x4602 0x4626 dibujos_de_la_receta  Los dos flujos que la receta despliega: 0x4602 sobre 0xEAC0 y 0x461F sobre 0xEEC2.
+
+B 0x40AF Volcar a la VRAM sin perder HL
+L 0x40AF VPOKE_HL          Escribe A en la VRAM HL, dejando DE como estaba
+L 0x40B5 VPEEK_HL          Lee en A el byte de la VRAM HL
+L 0x40BB MONTA_PANTALLA_TITULO  Pinta el rotulo, los colores y los tiles de la pantalla del titulo
+C 0x40C1 VRAM 0x2787 y de nueve en nueve: siete retoques sueltos en los patrones
+C 0x40D4 Ocho bytes a la VRAM 0x6030: un tile del tercio de abajo
+C 0x40DF 0x4490 y 0x4510 son direcciones de la VRAM, no de la ROM: la tabla de color
+C 0x40F6 VRAM 0x0408, 0x30 bytes del color 2
+L 0x41CC PINTA_SEIS_VECES  El mismo flujo de HL, seis veces, bajando 0x10 en la VRAM cada vez
+C 0x41D4 0x10 en la VRAM es una fila de ocho pixeles en la tabla de color
+
+B 0x4190 Montar el terreno de la fase leyendo la receta de 0x45E5
+L 0x4190 MONTA_EL_TERRENO  Recorre la receta y va desplegando dibujos en el buffer
+C 0x419B Los dos bits bajos de la receta dicen que clase de tramo es
+C 0x419F La clase 2 lleva una repeticion mas que las otras
+C 0x41A7 0x0B y 0x07 de separacion entre uno y otro dentro del buffer
+C 0x41B2 0x465C es DESPLIEGA por dentro, ya con el buffer y el dibujo puestos
+C 0x41B8 Y la receta se recorre OTRA VEZ, ahora sobre 0xEEC2 y con el flujo de 0x461F: el techo lleva su propio relieve, no es un espejo del suelo
+C 0x41C5 El `scf` marca la diferencia entre los dos recorridos dentro de 0x465C
+
+B 0x4C8D Mas ayudas de VRAM
+L 0x4C8D LLENA_VRAM_HL     Como LLENA_VRAM, pero con la direccion en HL
+L 0x4C93 COPIA_A_VRAM      Vuelca B bytes de HL en la VRAM DE y deja DE detras
+C 0x4C9C DE se queda apuntando al final de lo copiado: se puede encadenar
+
+L 0x4C9F PREPARA_LOGOTIPO  Deja el logotipo listo para subir: 0x11 filas y el cursor a cero
+C 0x4C9F Diecisiete filas es lo que mide el KONAMI grande
+L 0x4CAB PINTA_LOGOTIPO    Suelta el logotipo comprimido en la VRAM y le da color
+C 0x4CAE VRAM 0x6300: los patrones del tercio de abajo
+C 0x4CB4 Y 0xD0 bytes de color 0xF0 detras
+
+B 0x4D8D La pantalla de la introduccion: la nave que llega a la base
+L 0x4D8D EMPIEZA_LA_INTRO  Limpia la fila de arriba y pone la nave en su sitio de salida
+C 0x4D8D VRAM 0x3A00, 0x20 tiles del 0x87: la fila que separa el marcador
+C 0x4D99 0xE54B a cero: la nave viene volando
+C 0x4D9C Las cuatro fichas de 0x41E4 al buffer de sprites
+C 0x4DA7 0x60 fotogramas de vuelo antes de que cambie nada
+L 0x4DAD PASO_DE_LA_INTRO  Un fotograma de la llegada: la nave baja sola y avanza
+C 0x4DB1 Dos bits del contador, subidos abajo: el reloj del decorado
+C 0x4DBD Y uno de cada cuatro fotogramas, lo de 0x4FA2
+C 0x4DC7 Con 0xE54B a 2 la nave ya esta parada y no se mueve mas
+C 0x4DCF Volando avanza una columna; en las dos fases baja dos filas
+C 0x4DD5 Y la segunda mitad de la nave, 0x10 columnas por detras
+C 0x4DEC 0xE55A es lo que dura la fase de la llegada
+C 0x4DF1 Agotada, se pasa a la fase siguiente de 0xE54B
+C 0x4DFA La segunda fase dura 0x58 fotogramas
+L 0x4E05 PINTA_CARTEL_INVADE  Suelta el cartel INVADE THE BASE AND / CARRY AWAY BOOTY
+
+# ===========================================================================
+# Preparar una fase
+# ===========================================================================
+
+L 0x4E16 VUELCA_LOS_SPRITES  Los 0x10 bytes de fichas de 0xE7D0 a la VRAM 0x3B00
+C 0x4E16 Cuatro fichas de cuatro bytes: las dos mitades de la nave y sus dos acompanantes
+
+L 0x4E22 REINICIA_EL_TERRENO  Los cuatro punteros del terreno vuelven al principio del buffer
+C 0x4E22 0xE660 es donde empieza el terreno montado
+C 0x4E25 Cuatro punteros a la vez -0xE540, 42, 44 y 46-: cuatro lecturas distintas del mismo terreno
+C 0x4E37 0xE51F, 0xE50E, 0xE54B y 0xE530 a cero: nada reventando, nave volando
+C 0x4E53 0xE51E y 0xE54F a uno
+C 0x4E59 0xE519 arranca en 3 y 0xE548 en 4
+
+L 0x4E6C REPARTE_LOS_MARCADORES  Deja los dos marcadores y el escalon de la vida extra
+C 0x4E76 0xE056 a 3 y 0xE057 a 0x24
+
+L 0x4E7C EMPIEZA_LA_FASE   Limpia la pantalla, el buffer del terreno y las fichas de sprite
+C 0x4E7C VRAM 0x3AA0, 0x20 tiles del 0x87: la fila de separacion
+C 0x4E8A Ocho bytes de 0xE550 a cero
+C 0x4E94 0xE50B arranca en 0xB1: lo que falta para llegar a la base
+C 0x4E9A Los cuatro tercios del buffer, 0xA0 bytes cada uno, a cero
+C 0x4EAB Los diez y seis primeros bytes de 0x5036 a las fichas de 0xE7C8...
+C 0x4EB5 ...y detras, diez tandas de cuatro bytes iguales: los sprites que todavia no se usan quedan todos con la misma ficha
+
+# ===========================================================================
+# De coordenadas a VRAM, y el cielo estrellado
+# ===========================================================================
+
+L 0x4EC0 MONTA_LAS_FICHAS  Deja puestas las fichas de sprite del marcador y del suelo
+C 0x4EC6 0xD1 es el tile que se planta en las dos fichas de 0xE7C8 y 0xE7CC
+C 0x4ED1 0x18 bytes a la VRAM 0x3B18: las seis fichas de la segunda mitad
+C 0x4EE1 0xE053, la zona, es lo ultimo que se pinta
+
+B 0x4EE7 Pasar una posicion a una direccion de la VRAM
+L 0x4EE7 POSICION_A_NOMBRE  H columna y L fila pasan a la direccion de la tabla de nombres
+C 0x4EE7 Nueve desplazamientos entre A y H: dividir los dos por ocho a la vez, que es pasar de pixeles a casillas
+C 0x4EF5 Y el resultado se monta sobre 0x3800, la tabla de nombres
+L 0x4EFB POSICION_A_PATRON  La misma posicion, pero como direccion dentro de la tabla de patrones
+C 0x4EFC Los tres bits bajos son el pixel dentro de la casilla
+C 0x4F08 Tres `add hl,hl` es multiplicar por ocho: cada casilla son ocho bytes
+C 0x4F13 Con el bit 3 puesto, cuatro filas menos
+
+B 0x4F1B El cielo. Las estrellas se encienden y se apagan por lista
+L 0x4F1B MUEVE_LAS_ESTRELLAS  Cambia de lista de estrellas cada cuatro veces
+C 0x4F1B Con techo (0xE054) no hay estrellas: se esta dentro de una cueva, no bajo el cielo
+C 0x4F20 0xE519 cuenta hacia atras de 4 a 1 y vuelve a empezar
+L 0x4F29 PINTA_LAS_ESTRELLAS  Enciende o apaga las estrellas de una de las dos listas
+C 0x4F29 El tile 5 es la estrella...
+C 0x4F2E ...y el 0, el cielo vacio: la misma rutina las pone y las quita
+C 0x4F30 Un bit elige lista: 0x4F58 o 0x4F61
+C 0x4F3A Se recorre la tabla de nombres desde el principio
+C 0x4F3D El primer byte de la lista es cuantas estrellas, y los que siguen, cuanto se avanza hasta cada una
+C 0x4F45 Y ahi se planta el tile, estrella o vacio
+C 0x4F4A Con H impar ya se ha pasado del tercio: se acabo
+C 0x4F53 La otra lista, para la segunda pasada
+
+D 0x4f58 0x4f70 listas_de_estrellas  Las dos listas de sitios del cielo que recorre 0x4F29: la de 0x4F58 (desde 0x4F30 y 0x4F53) y la de 0x4F61 (desde 0x4F37). El primer byte de cada una dice cuantas estrellas vienen, y los siguientes cuanto se avanza en la tabla de nombres desde la anterior.
+
+# ===========================================================================
+# La barra de combustible, la llama del motor y los puntos por sorteo
+# ===========================================================================
+
+L 0x4F70 REPONE_COMBUSTIBLE  Deja el deposito en 0x1F y suelta la nave
+C 0x4F70 Dos bits de A: no en cualquier momento
+C 0x4F73 0xE560 a cero: la nave vuelve a obedecer al mando
+C 0x4F7A 0x1F es el deposito lleno
+L 0x4F7C PINTA_COMBUSTIBLE  La barra del deposito, en la VRAM 0x3AF6
+C 0x4F83 Dividido entre cuatro: cuantas casillas van enteras
+C 0x4F8A 0xC4 es la casilla llena del deposito
+C 0x4F92 Y lo que sobra de la division, de 1 a 3, es la casilla a medias: 0xC4 mas el resto da los tres dibujos intermedios
+C 0x4F9D Detras, una casilla vacia que borra lo que hubiera antes
+
+L 0x4FA2 MUEVE_LA_LLAMA    Cambia el dibujo de la llama del motor entre dos
+C 0x4FA5 0x14 y 0x1C, o 0x18 y 0x20: dos dibujos que se turnan
+C 0x4FA9 Si ya esta en el primero, se pone el segundo, y al reves
+
+L 0x4FB5 MONTA_SPRITES_DE_ZONA  Rehace las fichas de sprite si ha cambiado la zona
+C 0x4FB8 0xE54F puesto es que hay que rehacerlas
+L 0x4FBF PONE_FICHAS_DE_ZONA  Cuatro fichas sacadas de la tabla de 0x504A, segun la clase de zona
+C 0x4FC0 Los dos bits bajos de 0xE053: cuatro clases de zona
+C 0x4FC3 Por cuatro, que es lo que ocupa cada juego de fichas
+C 0x4FD1 Cuatro fichas de cuatro bytes, una detras de otra
+C 0x4FDB En la clase 1, el dibujo de la tercera ficha es el 9
+C 0x4FE6 Y las cuatro fichas a la VRAM 0x3B08
+
+L 0x4FEE APAGA_LAS_FICHAS  Deja las catorce fichas de sprite en el dibujo 0xD1
+C 0x4FF3 0xD1 de cuatro en cuatro: solo se toca el dibujo de cada ficha
+C 0x5006 Y de la 0x3B30 en adelante, 0x30 bytes mas
+
+L 0x500D PINTA_LA_BASE     Suelta en el buffer el dibujo de 0x4614
+L 0x5012 PINTA_EL_ROTULO_DE_FASE  Lo mismo con el rotulo de 0x506D
+C 0x5015 0xEB31 dentro del buffer del decorado
+C 0x501B Se entra a DESPLIEGA por dentro, en 0x4673, con la cuenta ya puesta
+
+B 0x501E Los puntos que se ganan, unos fijos y otros por sorteo
+L 0x501E PUNTOS_DE_PREMIO  Cincuenta puntos, o una cantidad sorteada
+C 0x501E 0x0050 son cincuenta puntos en BCD
+C 0x5025 El registro R del Z80 -el contador de refresco de la memoria- vale aqui de dado: sus dos bits bajos dan 0, 1, 2 o 3...
+C 0x5029 ...y eso se sube al byte alto, asi que el premio es 0, 100, 200 o 300
+L 0x5030 PUNTOS_ACUMULADOS  Suma lo que se haya ido juntando en 0xE55B
+
+# ===========================================================================
+# El decorado que corre, y el final de zona
+# ===========================================================================
+
+L 0x5305 SUBMODO_1_TECHO  Lo mismo que el submodo 0, pero con el par de buffers de arriba (0xEC00/0xEE00) sobre la VRAM 0x3820
+C 0x5305 0xE054 manda aqui, y en esta version no lo enciende nadie: en los 8192 bytes no hay ni un `ld (0E054h),a`, y el unico sitio que puede escribirlo es el `ld (hl),a` de 0x530D, tres instrucciones mas abajo del `ret z`
+C 0x530F Y esto es lo que no llega a hacerse: 0xE50D elige pagina, 0xEC00 o 0xEE00
+C 0x5318 0xA0 bytes a la VRAM 0x3820, la mitad de ARRIBA de la pantalla; el submodo 0 vuelca el otro par de buffers a 0x3A00, la de abajo
+C 0x532F Cinco tandas de 0x1F bytes, cada una corrida un sitio: asi se desplaza el decorado entero una columna
+C 0x533B 0xE50B es lo que falta para llegar a la base
+C 0x5341 Cinco filas, y entre fila y fila 0x20 bytes: una columna de arriba abajo
+C 0x5362 Una columna menos para la base
+C 0x5365 Pasado el 0x27 se enciende 0xE55E
+C 0x5379 Y a falta de 0x12 columnas suena el aviso de que se llega
+C 0x5389 Llegado a cero, la zona esta superada
+
+B 0x5389 Zona superada: sube el numero, cambia el decorado y paga
+C 0x538D Se apaga lo que quedara pendiente
+C 0x5394 0xE54F a uno: hay que rehacer las fichas de sprite de la zona nueva
+C 0x5397 0xE051 es el numero de zona que se PINTA, y va en BCD
+C 0x53A1 0xE053 es el numero de verdad, que no se pinta y sirve de indice
+C 0x53A4 Menos dos y los dos bits bajos: cada cuatro zonas el ciclo vuelve a empezar
+C 0x53AD 0x200 bytes de VRAM limpios antes del decorado nuevo
+C 0x53B6 Y 1500 puntos por haber pasado la zona
+L 0x53C0 PREPARA_LA_ZONA   Deja la longitud de la zona nueva y su cuenta atras
+C 0x53C5 0xB6 columnas de largo tiene la zona
+C 0x53CA Y cada tres zonas se reponen los 0x28
+
+B 0x53DC Chocar es que dos rectangulos se pisen en los dos ejes
+L 0x53DC HAY_CHOQUE        Con carry, B,C y D,E se estan pisando; los tamanos, en (HL)
+C 0x53DC Se resta la posicion del otro y el ancho, y se le suma el ancho propio: si eso no se desborda, en este eje no se tocan y no hay nada mas que mirar
+C 0x53E2 Y lo mismo en el otro eje: solo hay choque si se pisan en los dos
+
+# ===========================================================================
+# Los tres choques que se miran en cada fotograma
+# ===========================================================================
+# 0x5139 los encadena: en cuanto uno da carry, los demas no se miran.
+
+L 0x53E9 CHOQUE_CON_LO_QUE_VUELA  La nave contra las fichas de 0xE7D8
+C 0x53EC Cada ficha son dos bytes de posicion
+C 0x53F1 De 0x98 para arriba la ficha esta fuera de la pantalla
+C 0x53FA Los tamanos salen de 0x5607, cuatro bytes por clase de zona
+C 0x540E 0xE6 es el final de la lista de fichas
+C 0x5415 Hay choque: la ficha se pone en el dibujo 0x0D, el de reventar
+C 0x5425 Y el carry es lo que avisa al que llamo
+
+L 0x5427 CHOQUE_CON_LO_QUE_DISPARAN  La nave contra las cuatro fichas de 0xE551
+C 0x542D Por debajo de la fila 0x38 la ficha no cuenta
+C 0x5439 0x4F08 esta dentro de POSICION_A_PATRON: pasa a pixeles
+C 0x543E Los margenes: 0x10 y 0x0C de ancho, 0x0E y 0x11 de alto
+C 0x5455 Sin carry: no ha chocado con ninguna
+
+L 0x5457 CHOQUE_CON_EL_DECORADO  La nave contra el terreno, leyendo los tiles de la VRAM
+C 0x545B Dos parejas de tiles con las que se choca, y su lista
+C 0x5462 Con techo y por encima de la fila 0x28 se mira la pagina 0xEC -la del techo- y la otra lista de formas, la de seis tiles: la nave puede chocar por ARRIBA
+C 0x547A Se pasa la posicion de la nave a casilla de la tabla de nombres
+C 0x5480 0xE520 guarda las ocho casillas que rodean a la nave: cuatro de ancho por dos de alto, leidas de la VRAM una a una
+C 0x548D 0x1C es lo que hay que sumar para bajar a la fila siguiente
+C 0x549D Por delante de la columna 8 no se mira el decorado
+C 0x54AA La posicion redondeada a casilla, que es como se compara
+
+# --- El bloque de 0x55D7 partido por sus lectores
+D 0x55e3 0x55f3 margenes_de_la_bomba  Los margenes con los que CHOQUE_DE_LA_BOMBA llama a HAY_CHOQUE, indexados por el dibujo de la ficha (0x558D).
+D 0x55f3 0x5607 margenes_del_disparo  Los margenes con los que CHOQUE_DEL_DISPARO llama a HAY_CHOQUE, indexados por el dibujo de la ficha (0x555F).
+D 0x5607 0x5617 margenes_de_lo_que_vuela  Los rectangulos con los que 0x53E9 llama a HAY_CHOQUE: cuatro bytes por clase de zona, y el indice es (0xE053) and 3 por cuatro.
+F 0x5607 4
+F 0x5617 3
+F 0x5629 3
+F 0x5634 4
+D 0x5617 0x5629 formas_de_tile_del_techo  Seis tiles de tres bytes, del 0x81 al 0x86: por donde se pasa por cada saliente del techo. Las lee 0x5472, o sea la rama de 0xE054.
+D 0x5629 0x5632 formas_de_tile_del_suelo  Tres tiles de tres bytes, del 0x81 al 0x83: la forma de las cuestas del suelo, que es lo unico contra lo que se choca en el juego publicado (0x545E).
+D 0x5632 0x5634 dos_bytes_sin_dueno_5632  `0C 00`, entre las formas del suelo (tres tiles de tres bytes) y las de los tiles grandes (cinco de cuatro). No hay en toda la ROM ningun `ld hl,05632h` ni nada que caiga aqui, y no encajan ni con las filas de tres de arriba ni con las de cuatro de abajo. Ver la pagina de preguntas abiertas.
+D 0x5634 0x5648 formas_de_tile_grande  Los margenes de los tiles del 0x87 para arriba, de cuatro en cuatro (0x551A).
+D 0x5648 0x564c margenes_del_deposito  Los cuatro bytes con los que MIRA_SI_ATERRIZA (0x50A7) llama a HAY_CHOQUE: el rectangulo del deposito del final de zona, sobre el que la nave aterriza.
+D 0x564c 0x5650 margenes_de_la_base  Los cuatro bytes con los que CHOQUE_CON_LA_BASE llama a HAY_CHOQUE (0x55AE).
+
+# ===========================================================================
+# Chocar contra el terreno: cada tile tiene su forma
+# ===========================================================================
+# El decorado no es una pared recta. Los tiles del 0x81 al 0x86 son cuestas y
+# salientes, y cada uno lleva TRES bytes en una tabla que dicen por donde se
+# le puede pasar. `sub 0x81` y por tres da la entrada.
+
+L 0x54C0 MIRA_LA_CASILLA   Un tile del decorado contra la nave
+C 0x54C0 Los dos tiles de la pareja que le paso el llamador
+C 0x54C6 0x87 es el tile lleno: contra ese siempre se choca
+C 0x54CA Por encima del 0x87 son los tiles grandes, que van por otro sitio
+C 0x54CC Del 0x81 en adelante, y por tres: cada tile tiene tres bytes de forma
+C 0x54D7 Se resta la posicion y se le suma el margen del tile; sin desbordarse, por ahi no se toca
+C 0x54E5 0x28 casillas recorridas: se acabo
+C 0x54EC Se baja ocho pixeles y se sigue por la casilla de al lado
+L 0x54FE MIRA_CASILLA_GRANDE  Los tiles del 0x87 para arriba, que ocupan mas de una casilla
+C 0x5501 El bit 0 del tile corre el margen ocho pixeles a un lado...
+C 0x550A ...el bit 1, ocho por el otro...
+C 0x5511 ...y el bit 3, cuatro de vuelta
+C 0x551A La tabla de 0x5634, de cuatro en cuatro
+C 0x552B 0xE51D a uno: la nave ha tocado el terreno
+C 0x5537 Y con eso se enciende la explosion
+
+L 0x5544 CHOQUE_DEL_DISPARO  El disparo de la nave contra lo que vuela
+C 0x5545 Los cinco bits bajos por ocho: la casilla en pixeles
+C 0x5552 0xD1 es la ficha apagada: ahi se acaba la lista
+C 0x555F Los margenes salen de 0x55F3, segun el dibujo de la ficha
+C 0x556B Con carry, tocado
+C 0x5572 De cuatro en cuatro hasta la 0xE8: diez fichas
+
+L 0x5578 CHOQUE_DE_LA_BOMBA  La bomba de 0xE7E8 contra lo que vuela
+C 0x558D Los mismos margenes, pero los de 0x55E3
+
+L 0x55A6 CHOQUE_CON_LA_BASE  La bomba contra el deposito de 0xE7C8
+C 0x55B6 0xE54A y 0xE54B a cero
+C 0x55C2 Y las dos fichas del deposito se apagan con el dibujo 0xD1
+
+# ===========================================================================
+# Reventar algo: los puntos, el boquete en el terreno y la explosion
+# ===========================================================================
+
+L 0x5650 REVIENTA_LO_TOCADO  Apaga la ficha, coloca la explosion y paga cien puntos
+C 0x5651 0xD1 apaga la ficha que se acaba de tocar
+C 0x5653 La tabla de 0x566B dice cuanto se corre la explosion respecto a la ficha
+C 0x5663 Cien puntos por lo que se acaba de reventar
+C 0x566A Y este `jp` es la ultima instruccion del bloque: sus dos bytes de operando son ya los dos primeros de la tabla de arriba
+
+D 0x566b 0x5675 desplazamientos_de_la_explosion  Pares (columna, fila) que 0x5653 suma a la ficha reventada para poner ahi la explosion; el indice llega dividido por dos con un `rrca`. La tabla arranca en 0x566B, que son los dos bytes del operando del `jp 0x5B85` de 0x566A: las dos primeras entradas caen encima del propio codigo, asi que el indice nunca puede valer 0 ni 1. Los diez bytes de 0x566D en adelante son los que se usan de verdad.
+F 0x566b 2
+
+B 0x5675 El boquete: una bomba se lleva un trozo de terreno
+L 0x5675 ABRE_BOQUETE      Borra del buffer las casillas que se lleva la explosion y las sube a la VRAM
+C 0x5675 Por debajo de 0x92 y por encima de 0xEF no hay terreno que romper
+C 0x567D Los tres bits bajos dicen si el boquete cae en media casilla
+C 0x5689 El bit 1 de la fila elige la pagina del buffer: 0xE800 o esa mas 0x3E0
+C 0x5696 Dos casillas a cero
+C 0x569A 0x1E mas abajo es la fila siguiente del buffer
+C 0x56AC Por debajo de la fila 0xB0 no se toca el borde
+C 0x56B4 0x83 y 0x86 son las cuestas: el borde del boquete no queda recto,
+C 0x56BE se le pone la pieza que corresponde a cada lado
+C 0x56C2 Y otra fila mas arriba, que tambien se limpia
+C 0x56D4 El bit 6 puesto en H: la direccion de la VRAM es de escritura
+C 0x56DF Aqui se escribe en la VRAM a pelo, sin pasar por VPOKE: cuatro bytes seguidos por fila y dos filas, que es todo el boquete
+C 0x56ED Al llegar al final de la fila de la tabla de nombres se corta
+C 0x56F9 0x20 bytes mas: la fila de debajo
+
+# ===========================================================================
+# Lo que sale a por la nave. El azar sale del registro R
+# ===========================================================================
+# Este cartucho no lleva generador de numeros aleatorios: usa el registro R
+# del Z80, que va contando los refrescos de la memoria y por tanto cambia con
+# cada instruccion. Hay SEIS `ld a,r` en la ROM: 0x5025 (cuantos puntos de
+# premio), 0x570F y 0x57DE (por donde sale lo que dispara), 0x57BA (en que
+# columna aparece un enemigo) y 0x57C2 y 0x57F0 (de que clase es).
+
+L 0x570A SUELTA_EN_ZONA_0  Lo que dispara el terreno en las zonas de clase 0
+C 0x570D Por debajo de la fila 0x58 se mira una cosa y por encima otra
+C 0x570F El registro R de dado: tres bits, y sobre 0x30
+C 0x571C 0xB0 menos el doble: se dispara hacia donde esta la nave
+C 0x5723 0x57F6 dice si en esa casilla hay de donde disparar
+L 0x572F SUELTA_EN_ZONA_1  Lo mismo, con otro alcance, si la zona no es la primera
+C 0x5731 En la zona 0 no dispara nadie: es la de aprender
+C 0x5739 0x50 menos la fila: cuanto se adelanta el disparo
+C 0x574D Con clase 1 el disparo es de otro tipo
+C 0x5754 El bit 6 del contador de la fase: la tercera tanda no va siempre
+C 0x5768 Pasada la columna 0x30 se le suman 0x98: se da la vuelta por el otro lado
+
+L 0x5773 ARRANCA_UN_DISPARO  Da de alta el disparo numero 0xE549 y lo hace sonar
+C 0x5773 0xE549 es cual de los huecos toca
+C 0x5777 0x3C mas el hueco: donde se apunta de que clase es
+C 0x577E El doble mas 0x40: dos bytes por hueco para la posicion
+C 0x5782 0x60 y 0xE6: donde arranca dentro del buffer
+C 0x5787 Y el sonido de que algo ha salido
+
+L 0x578C MUEVE_LO_DE_ZONA_1  Las cuatro fichas de 0xE7E4 en las zonas de clase 1
+C 0x578F Con la partida detenida, nada
+C 0x5791 0xE548 cuenta hacia atras y se queda en cero, sin pasarse
+C 0x57A1 En la zona 1 hay una ficha menos
+C 0x57AD 0xD1 es la ficha libre: la primera que se encuentre se usa
+C 0x57B7 Y si estan todas ocupadas, no sale nada
+L 0x57BA PONE_FICHA_AL_AZAR  Coloca la ficha en una columna cualquiera
+C 0x57BA Seis bits del registro R: la columna donde aparece
+C 0x57C0 0xFC es la fila de salida, casi abajo del todo
+C 0x57C2 Y un bit mas de R decide entre las dos clases
+
+L 0x57C8 SUELTA_EN_ZONA_2  Lo que sale en las zonas de clase 2 y siguientes
+C 0x57CD VRAM 0x3880, y 0xC0 es el nibble que se busca en el terreno
+C 0x57D2 El contador de la fase, doblado: cuanto mas dura, mas lejos aparecen
+C 0x57DE Cuatro bits del registro R: la columna, en saltos de cuatro
+C 0x57E9 Dos `rrca` y menos 0x82: de la fila sale el hueco de 0xE5xx
+C 0x57F0 Y un bit de R decide de que clase es
+
+B 0x57F6 Buscar en el propio decorado de que sitios sale algo
+L 0x57F6 BUSCA_EN_EL_TERRENO  Mira dos casillas de la VRAM: con carry, ahi hay de donde salir
+C 0x57F6 Dos casillas, no mas
+C 0x57F8 Tres `rra` y los cinco bits: la columna pasada a casilla
+C 0x5801 Se lee el tile de la VRAM
+C 0x5805 Solo importa el nibble alto: es la familia del tile
+C 0x580D Sin carry: en esas dos casillas no hay nada
+
+L 0x580F BUSCA_FICHA_LIBRE  El primer hueco libre de 0xE7D8, y con la zona 8 uno mas
+C 0x581E De la zona 8 en adelante caben cuatro a la vez en vez de tres
+C 0x5823 0xD1 es el dibujo de la ficha libre
+C 0x582E Sin ninguna libre, se vuelve sin carry
+
+L 0x5831 DA_DE_ALTA_LA_FICHA  Pone la ficha en su sitio y le abre el hueco en el terreno
+C 0x5831 Dos `rrca` y menos 0x36 dan el numero de hueco, que se guarda en 0xE549
+C 0x583F 0x567B esta dentro de ABRE_BOQUETE: se lleva el trozo de terreno
+C 0x5843 Menos 0xD1: de la direccion de la ficha sale su sitio en la VRAM 0x3B00
+
+D 0x58d6 0x58e6 cuantos_salen_por_zona  Lo que 0x5863 lee con la zona (0xE053) de indice, con tope 12. Como la tabla de 0x566B, arranca DENTRO del `jp 0x5C96` de 0x58D5: sus dos primeras entradas son los bytes 0x96 y 0x5C de ese operando, asi que las zonas 0 y 1 no pueden leerla de verdad. De la 2 en adelante los valores suben en escalera de 1 a 5.
+
+B 0x5851 Lo que dispara el terreno en las zonas altas
+L 0x5851 SUELTA_DE_LAS_ZONAS_ALTAS  De la zona 3 en adelante, lo que sale de las torres
+C 0x5851 Con 0xE50D a cero todavia no toca
+C 0x585D De la zona 16 en adelante ya no sube: el tope es 12
+C 0x5863 Cuantos pueden salir a la vez, segun la zona
+C 0x5872 Cuatro `rra` y cuatro bits: la columna de la nave pasada a casilla
+C 0x588F Pasada la columna 0x68 solo salen dos
+C 0x5898 0x78 menos la fila: hacia donde queda la nave
+C 0x58AF 0xEAxx: la pagina del buffer donde se mira el terreno
+C 0x58B2 0x98 es el tile del que salen: si no, se prueba la casilla de al lado
+C 0x58B8 Y de la casilla 6 no se pasa
+
+L 0x58BE BUSCA_HUECO_DE_DISPARO  El primer hueco libre de las cuatro fichas de 0xE551
+C 0x58C5 Por debajo de la fila 0x38 el hueco esta libre
+L 0x58CE ARRANCA_EL_DISPARO  Pone el dibujo 0xBA y lo hace sonar
+
+B 0x58E6 Mover lo que vuela en las zonas de clase 0
+L 0x58E6 MUEVE_LAS_FICHAS  Recorre las fichas de 0xE547 hacia atras y mueve cada una
+C 0x58EE 0xD1 es la ficha libre: ahi se acaba
+C 0x58F7 Segun la clase, la fila sube 2, baja 2 (0xFE) o sube 4
+C 0x5909 De 0xE53F sale el paso de esta ficha en la otra direccion
+C 0x590D El paso se guarda ya subido: al fotograma siguiente sera otro
+C 0x5914 Con el bit 7 del paso puesto no se mira el terreno
+C 0x591D Se pasa a casilla y se lee el tile de la VRAM
+C 0x5926 Pasada la fila 0x90 la ficha se apaga con el 0xD1
+
+B 0x593A Mover lo que vuela en las zonas de clase 1: aqui te siguen
+L 0x593A MUEVE_LAS_FICHAS_1  Como 0x58E6, pero mirando el terreno y persiguiendo a la nave
+C 0x593F 0xD1, ficha libre: no hay mas que mover
+C 0x5944 Dos columnas por fotograma, siempre hacia la izquierda
+C 0x5949 Y al desbordarse por la izquierda, la ficha se apaga
+C 0x594F El paso de subida arranca en 3...
+C 0x5954 ...y de la zona 6 en adelante, en 4: mas deprisa
+C 0x595F Con el otro sentido, 0xF8: se baja en vez de subir
+C 0x596E Se mira dos casillas por delante, no la de encima
+C 0x5972 Desbordado, la ficha se ha salido de la pantalla
+C 0x597E Tile por debajo del 6: aire, se puede seguir
+C 0x5982 Y si no, se le da la vuelta al sentido y sube en vez de bajar
+L 0x5992 MIRA_DONDE_ESTA_LA_NAVE  Deja en 0xE538 hacia que lado queda la nave
+C 0x5996 Por encima de la fila 0x90 no se persigue
+C 0x599F 0x19 de margen: dentro de eso ya se le da por encima
+C 0x59A8 0xE538 a 1 si la nave queda a un lado y a 0 si al otro
+L 0x59B3 APAGA_ESTA_FICHA  El 0xD1 que la deja libre
+
+B 0x59BB Mover lo que vuela en las zonas de clase 2 y siguientes
+L 0x59BB MUEVE_LAS_FICHAS_2  Con cuenta atras propia y paso de media casilla
+C 0x59C1 Cada ficha lleva su cuenta; al llegar a cero se acabo
+C 0x59C7 0xFA de paso, o 0xF8 si el hueco de 0xE533 esta marcado
+C 0x59DA Con el bit 0 de 0xE054 el paso se invierte...
+C 0x59E0 ...y un `srl` lo deja a la mitad: se mueve mas despacio
+C 0x59E4 Pasado el 0xD0 se ha salido por abajo
+C 0x59F3 Se mira el tile del sitio nuevo
+C 0x59FC Por debajo del tile 0x20 hay aire; si no, la ficha se apaga
+
+L 0x5A08 VUELCA_LAS_CATORCE_FICHAS  Las catorce fichas de 0xE7D8 a la VRAM 0x3B08
+
+B 0x5A13 Los disparos que suben del terreno
+L 0x5A13 MUEVE_LOS_DISPAROS  Las cuatro fichas de 0xE551 suben y se pintan en la tabla de nombres
+C 0x5A19 Por debajo de la fila 0x38 el hueco esta libre
+C 0x5A21 0x21 de subida por fotograma: dos filas y pico
+C 0x5A2E 0x37 es el tile del disparo
+C 0x5A32 Al llegar al borde de la fila se corta
+C 0x5A40 Menos 0x80: solo se pisa lo que sea cielo
+C 0x5A50 Y por donde paso se repone el tile 0x21, o el cielo vacio
+
+B 0x5A5F El disparo de la nave, y la bomba
+L 0x5A5F MUEVE_EL_DISPARO  Lo mueve, mira contra que choca y reparte las consecuencias
+C 0x5A5F Con el primer byte a cero no hay disparo en el aire
+C 0x5A6A Se borra de donde estaba...
+C 0x5A6E ...y se mira el tile de donde va
+C 0x5A71 Por debajo del tile 6 es cielo: sigue volando
+C 0x5A78 Y al llegar al borde de la fila, se acabo
+C 0x5A88 Antes de nada, si le da a algo que vuela
+C 0x5A90 Sigue volando: se pinta en el sitio nuevo
+L 0x5A98 EL_DISPARO_TOCA_TERRENO  Abre el boquete, y si era un deposito repone y paga
+C 0x5A9B El boquete en el terreno
+C 0x5AA4 Si lo que ha reventado era un deposito, el combustible se llena
+C 0x5AA8 Y los puntos de premio, fijos o sorteados
+C 0x5AB0 Sin el bit 3, cuatro filas mas abajo: la explosion se centra
+C 0x5ABC Y el disparo queda dado de baja
+
+B 0x5AC2 La bomba: cae, mira contra que da y se lleva el terreno por delante
+L 0x5AC2 MUEVE_LA_BOMBA    La bomba de 0xE7E8, con sus choques y su explosion
+C 0x5AC2 Con 0xE51F a cero no hay bomba en el aire
+C 0x5AC7 Primero, si le ha dado a algo que vuela
+C 0x5ACD Y si 0xE54A esta puesto, tambien contra el deposito
+C 0x5ADF Cuatro casillas de la VRAM a 0xE520: la de la bomba, la de al lado y las dos de debajo. La segunda de cada par se lee con `in a,(098h)` a secas, aprovechando que el VDP avanza solo la direccion
+C 0x5AF3 Del tile 0x84 al 0x86: cuestas, y ahi se para
+C 0x5AFA Del 0x80 al 0x87: terreno
+C 0x5B07 Del 0x90 al 0xCB: tambien
+C 0x5B29 Los margenes salen de la tabla de 0x55D3, cuatro bytes por familia de tile: el indice es el nibble alto y siete
+C 0x5B40 Sin choque, la bomba sigue cayendo
+C 0x5B45 Y si lo que ha reventado era un deposito, se llena el combustible
+C 0x5B49 Los puntos
+C 0x5B4F El boquete en el terreno
+L 0x5B59 BAJA_LA_BOMBA     Deja la bomba dada de baja y apaga su ficha
+C 0x5B60 0xD1 la apaga
+L 0x5B6E LA_BOMBA_SE_ESTRELLA  Cuando cae sin darle a nada
+C 0x5B78 0xE55F a uno: la explosion sonara distinta
+
+B 0x5B7D Poner una explosion donde sea
+L 0x5B7D COLOCA_EXPLOSION  Sube ocho pixeles si hace falta y busca hueco de explosion
+C 0x5B7D Pasada la fila 0xAE, la explosion se sube ocho pixeles para que se vea
+L 0x5B85 PONE_EXPLOSION    Ocupa uno de los cuatro huecos de explosion y la hace sonar
+C 0x5B89 Cuatro huecos; el primero que este a cero
+C 0x5B92 Si estan los cuatro ocupados, se pisa el primero
+C 0x5B94 9 es lo que dura la explosion
+C 0x5B9B La posicion va a 0xE7F0, de cuatro en cuatro
+C 0x5BA4 0xE55F distingue las dos explosiones: la normal y la de la bomba
+C 0x5BAA 0x42 es el sonido del reventon
+
+D 0x55d3 0x55e3 margenes_de_la_bomba  Los cuatro bytes por familia de tile con los que 0x5B29 llama a HAY_CHOQUE; el indice es el nibble alto del tile y siete. Como las tablas de 0x566B y 0x58D6, arranca DENTRO del codigo: sus cuatro primeros bytes son los del `call 0x4C93` y el `scf`/`ret` de 0x55D2, asi que la familia 0 no puede leerla de verdad.
+F 0x55d3 4
+
+L 0x5BB1 VUELCA_LAS_EXPLOSIONES  Las fichas de 0xE7F0 a la VRAM 0x3B20, y las que se apagan
+C 0x5BC4 Cada explosion lleva su cuenta atras en 0xE530
+C 0x5BCB Al llegar a cero, la ficha se apaga con el 0xD1
+
+B 0x5BD6 La nave revienta
+L 0x5BD6 LA_NAVE_REVIENTA  Enciende la explosion de la nave y la hace sonar
+C 0x5BD8 0xE50E puesto es lo que desvia el paso de partida a 0x5BE5
+C 0x5BDB 0x60 fotogramas dura el reventon
+C 0x5BE0 0xCD es el sonido de la nave estrellandose
+L 0x5BE5 PASO_DEL_REVENTON  Un fotograma de la nave reventada
+C 0x5BEB El bit 2 de la cuenta: los dibujos se turnan cada cuatro fotogramas
+C 0x5BED Dos parejas de dibujos, 0x38/0x0A y 0x30/0x0A
+C 0x5C0D Solo si 0xE54B vale 1 hay que retocar las otras dos fichas
+C 0x5C12 Y los dos dibujos de 0x5C28, cambiados de sitio segun el fotograma
+L 0x5C2C SE_ACABA_EL_REVENTON  Apaga las fichas y avisa de que el jugador ha muerto
+C 0x5C30 0xE06F a cero: ESTADO_11 deja de jugar y pasa al siguiente
+C 0x5C33 Si la nave habia llegado ya al final, 0xE55E lo dice y no se pierde vida
+
+D 0x5c28 0x5c2c dibujos_de_la_nave_rota  Los dos pares de dibujos con los que 0x5C12 pinta la nave estrellada: el 6 y el 7, que se turnan segun el fotograma.
+F 0x5c28 2
+
+B 0x5C41 Llegar a la base: el final de la fase
+L 0x5C41 LLEGA_A_LA_BASE   Limpia lo que quede volando, felicita y paga
+C 0x5C48 Los cuatro disparos que hubiera en el aire se borran uno a uno
+C 0x5C5F 0xE012 distingue si hay que pintar o borrar el cartel
+C 0x5C63 INVASION SUCCEEDED
+C 0x5C6C Las dos fichas del deposito se apagan
+C 0x5C7D Y aqui el mismo cartel se BORRA, entrando por 0x4064 en vez de 0x4068
+C 0x5C8D 1500 puntos por haber llegado
+
+# ===========================================================================
+# EL REPRODUCTOR DE SONIDO
+# ===========================================================================
+# Es pariente del de Athletic Land, pero NO es el mismo pegado: no hay un
+# desplazamiento unico que alinee los dos. Medido con tools/comun_konami.py y
+# tiras de 8 bytes o mas, de los 320 bytes de 0x5D30-0x5E70 hay 177 -el
+# 55,3 %- dentro de una tira identica a Athletic, repartidos en SEIS tiras
+# cuyos desplazamientos van de 0x1B0B a 0x1B28: el mismo codigo con trozos
+# metidos y quitados en medio. Las mas largas son 74 bytes en 0x5DCE y 41 en
+# 0x5E38. Aqui las rutinas llevan sus nombres, y las direcciones y los datos
+# estan medidos en ESTE cartucho.
+#
+# Tres canales de diez bytes cada uno a partir de 0xE010:
+#   +0 lo que queda de nota   +1 la duracion   +2 el numero de sonido
+#   +3/+4 el puntero de la pista   +5 la octava   +6 el volumen
+#   +8 la envolvente          +9 el sonido encadenado
+
+L 0x5C96 SUENA_ESTO        Manda sonar el sonido A, guardando todos los registros
+C 0x5C96 Sin interrupciones: la interrupcion tambien toca el sonido
+C 0x5C9B D a cero: se respeta lo que ya este sonando
+L 0x5CA6 SONIDO_ARRANCA    Reparte el sonido A entre los canales que le tocan
+C 0x5CAC Aqui se reparten los canales: por debajo del 0x89 el sonido se lleva UNO, del 0x89 al 0x8C DOS y del 0x8D en adelante TRES, y las pistas salen de palabras seguidas de la tabla
+C 0x5CB4 El `inc b` es el que sube de dos canales a tres
+C 0x5CB7 Los seis bits bajos son el numero de sonido de verdad
+C 0x5CBA Por debajo del 6, los sonidos cortos: prioridad en 0xE01C o 0xE026
+C 0x5CC8 Con D a 1 -desde el bucle- no se mira la prioridad
+C 0x5CCC Si lo que suena vale mas que esto, no se pisa
+L 0x5CD5 SONIDO_PISTAS     Busca la pista en la tabla de 0x5E5F y arranca los canales
+C 0x5CD5 El numero y 0x3F, por dos: una palabra por canal, seguidas
+C 0x5CD8 0x5E5F es la base de la tabla, y cae dos bytes ANTES de la primera palabra: la entrada 0 se monta sobre los dos ultimos periodos de nota y apunta a 0x383C, fuera del cartucho. El sonido numero 0 no se puede pedir, y no lo pide nadie
+C 0x5CE0 Un fotograma de nota y duracion 1: al primer paso ya se lee el evento
+C 0x5CE6 El numero de sonido, que es lo que mira la prioridad
+C 0x5CEE Cinco mas: el byte de la envolvente del canal siguiente
+
+L 0x5CF9 SONIDO_ENCADENADO  Al acabarse un sonido, arranca el que lleve apuntado en +9
+C 0x5D0B D a 1: este no mira prioridades
+
+L 0x5D16 PSG_MEZCLA        Abre o cierra el tono del canal C en el registro 7 del PSG
+C 0x5D16 El registro 7 es el de la mezcla: que canales suenan y cuales no
+C 0x5D23 Tres `rlca` colocan el bit del canal en su sitio
+C 0x5D26 Con D a cero se abre el canal, y si no se cierra
+
+L 0x5D31 SUENA             Un fotograma de los tres canales
+C 0x5D31 IX recorre los canales desde 0xE010, diez bytes cada uno
+C 0x5D45 Dos `inc c` porque cada canal ocupa dos registros del PSG
+L 0x5D4D SUENA_CANAL       Un paso del canal que apunta IX
+C 0x5D4D El bit 6 del sonido decide si el canal lleva tono o solo ruido
+C 0x5D58 Con el bit 7 puesto es musica, y va por otro sitio
+C 0x5D5B Se descuenta la nota; hasta que no llega a cero no se lee nada
+L 0x5D5F SIGUIENTE_EVENTO  Lee el evento siguiente de la pista
+C 0x5D66 0xFE: la pista vuelve a empezar
+C 0x5D6A 0xFF: se apaga el canal
+C 0x5D73 0x2n: cambia la duracion de las notas del efecto
+C 0x5D83 0x1n: el registro 6 del PSG, el periodo del ruido
+L 0x5D99 EFECTO_EVENTO     Nibble alto el volumen, nibble bajo y el byte siguiente el periodo
+C 0x5D9F La pista se deja apuntando a lo que venga detras
+L 0x5DAE NOTA_ARRANCA      Deja la nota sonando con su duracion y su envolvente
+C 0x5DAF +1 es la duracion fijada, +0 la cuenta atras
+C 0x5DB5 +8 arranca tres por encima: la envolvente los gasta al principio
+L 0x5DBC CANAL_APAGA       Cierra el canal en el PSG y lo deja libre
+L 0x5DC8 SUENA_MUSICA      Como SUENA_CANAL, pero para las pistas de musica
+
+L 0x5DCE MUSICA_PASO       Descuenta la nota y baja el volumen segun la envolvente
+C 0x5DCE +8 es la envolvente: mientras no coincida con lo que queda de nota, se baja
+C 0x5DD9 Los tres ultimos fotogramas de la nota tambien bajan
+C 0x5DE1 +7 es el volumen de ahora; a cero, se deja de bajar
+L 0x5DEA PSG_VOLUMEN       Manda el volumen H al registro 8, 9 o 10 del PSG
+C 0x5DEB C vale 1, 3 o 5: un `rrca` y mas 0x88 da 8, 9 o 10
+L 0x5DF4 MUSICA_EVENTO     Los eventos de una pista de musica
+C 0x5DF4 0xFD: cambia la octava y el volumen de arranque
+C 0x5DFA Los tres bits bajos, la octava, a +5
+C 0x5DFF El resto, bajado tres bits, es el volumen de arranque, a +6
+L 0x5E08 MUSICA_NOTA       Nibble bajo la nota, nibble alto el indice de duracion
+C 0x5E08 Los cuatro bits bajos son la nota
+C 0x5E0D La pista queda apuntando al evento siguiente
+C 0x5E17 El nibble alto indexa la tabla de duraciones de 0x5E85
+C 0x5E22 La nota 12 es silencio: se deja el volumen a cero y no se repone
+C 0x5E29 Y con nota de verdad, el volumen vuelve al de arranque
+L 0x5E2F MUSICA_PERIODO    Busca el periodo de la nota y lo baja las octavas que haga falta
+C 0x5E33 Los doce periodos de la octava mas alta, un byte cada uno
+C 0x5E3C Sin octavas que bajar, el periodo va tal cual
+C 0x5E43 Doblar el periodo es bajar una octava
+L 0x5E46 PSG_PERIODO       El periodo HL a los dos registros del canal C
+C 0x5E46 El registro impar lleva el byte alto...
+C 0x5E4C ...y el par de debajo, el bajo
+
+L 0x47FC ARRANCA_EL_SONIDO  Deja el PSG con su mezcla y borra la VRAM entera
+C 0x47FC Registro 7 del PSG a 0xB8: los tres tonos abiertos y el ruido cerrado
+C 0x4804 0xD0 es el sonido del arranque
+C 0x4809 0x4000 bytes a cero: la VRAM entera, de golpe
+
+B 0x51B1 Disparar y soltar la bomba, mirando el FLANCO del boton
+L 0x51B1 DISPARA_O_BOMBEA  Suelta el disparo o la bomba cuando se ACABA de pulsar
+C 0x51B1 0xE008 es lo del fotograma anterior y 0xE009 lo de ahora: el `cpl` y los dos `and` dejan pasar solo el fotograma en que el boton pasa de suelto a pulsado. Sin esto, tener el boton apretado dispararia sesenta veces por segundo
+C 0x51BB Se busca hueco en 0xE620 o en la pagina de al lado
+C 0x51C7 Los tres bits bajos de la fila deciden hacia donde sale
+C 0x51D3 0xF0 mas eso: el dibujo del disparo
+C 0x51DB Se mira el tile de donde iria a parar
+C 0x51E4 Por debajo del tile 6 es cielo: el disparo cabe
+C 0x51F3 0x41 es el sonido de disparar
+C 0x51FA Y si no cabe, el hueco se deja libre
+L 0x51FD SUELTA_LA_BOMBA   Da de alta la bomba, doce pixeles por delante de la nave
+C 0x51FD 0xE51F puesto es que ya hay una bomba cayendo
+C 0x5204 Doce pixeles por delante de la segunda mitad de la nave
+
+L 0x5078 PINTA_LA_ZONA     El numero de zona en la VRAM 0x3927
+C 0x507E Un solo byte en BCD
+C 0x5086 Por debajo de la zona 16 se borra la cifra de las decenas
+C 0x5091 Y el rotulo de 0x505A al lado
+L 0x5097 LA_NAVE_SE_PARA   Deja la nave quieta y suena el aviso
+C 0x5097 0xE54B a 2: MUEVE_LA_NAVE deja de hacer caso al mando
+
+L 0x50A1 MIRA_SI_ATERRIZA  La nave contra el deposito del final
+C 0x50A1 Con 0xE54A a cero no hay deposito que tocar
+C 0x50A7 Los margenes del deposito
+C 0x50B4 Tocado: 0xE54A se apaga y 0xE54B pasa a 1, que es aterrizando
+C 0x50BD Y la ficha se queda con el dibujo 4
+
+# --- El bloque del sonido, partido por uso
+D 0x5e55 0x5e61 periodos_de_notas  Los doce periodos de la octava mas alta, un BYTE cada uno (0x5E33 los lee con `ld l,(hl)`), y las octavas de abajo salen doblando.
+F 0x5e55 12
+D 0x5e61 0x5e85 punteros_de_pista  Las palabras que dicen donde empieza cada pista. OJO: la base que usa 0x5CD8 es 0x5E5F, dos bytes ANTES, asi que la entrada 0 cae sobre los dos ultimos periodos y el sonido numero 0 no se puede pedir. La primera de verdad es la 1, en 0x5E61.
+F 0x5e61 2
+D 0x5e85 0x6000 duraciones_y_pistas  La tabla de duraciones que 0x5E17 indexa con el nibble alto de la nota, y detras las pistas del PSG. Los punteros de 0x5E61 apuntan a pistas que empiezan DENTRO de ese primer tramo -0x5E89 y 0x5EA9-, asi que o las duraciones que se usan de verdad son pocas o esos bytes sirven para las dos cosas: no esta cerrado. La ultima pista acaba en 0x5FF3 y los doce bytes que quedan hasta 0x5FFF son el unico relleno de 0xFF del cartucho; los otros dos huecos son de ceros, doce en la cabecera (0x4004) y diez en 0x506D.
+
+# --- Los tramos que el trazador corta como rutina aparte y son la segunda
+#     mitad de una que ya esta explicada arriba.
+
+C 0x557F Se guarda el principio de la lista para poder volver
+C 0x5585 Los dos bytes de posicion de la ficha
+C 0x5590 Y los margenes, segun el dibujo que lleve
+C 0x559C Cuatro bytes por ficha, hasta la 0xE8
+
+C 0x5343 Cinco filas de decorado, una detras de otra
+C 0x5347 0x20 bytes de una fila a la de abajo
+C 0x534C La resta deja en D cuanto se ha movido
+
+C 0x5D99 El nibble alto del byte es el volumen del efecto
+C 0x5D9C Y el byte siguiente completa el periodo por abajo
+C 0x5DA6 El periodo entero a los dos registros del canal
+
+C 0x536C 0xE55E marca que la nave ha llegado al tramo final
+C 0x5378 A falta de 0x12 columnas suena el aviso de llegada
+C 0x5385 Y mas cerca todavia, lo de 0x5078
+
+C 0x56C0 0x86 cierra el boquete por el otro lado
+C 0x56C5 La fila de encima tambien se limpia
+C 0x56CE Y por debajo de la fila 0xB0 una casilla mas
+
+C 0x5D80 0x1n en la pista: el registro 6 del PSG, el periodo del ruido
+C 0x5D87 Los cinco bits bajos son ese periodo
+C 0x5D90 Y con D a cero se abre el canal en la mezcla
+
+C 0x5C4B Por debajo de la fila 0x38 el hueco esta libre y no hay que borrarlo
+C 0x5C54 Se borra de la pantalla poniendo el tile 0
+C 0x5C59 Tres bytes por hueco
+
+C 0x410F Ocho bytes iguales de golpe
+C 0x4113 Y cuando se acaban las doce tandas, fuera
+
+C 0x4A24 Un tile por casilla, y el codigo sube con la columna
+C 0x4A2B Hecha la primera fila, la segunda
+C 0x4A31 Y un tile suelto en la VRAM 0x38EC
+
+C 0x54A8 La posicion de la nave redondeada a casilla, que es como se compara
+C 0x54AB Los tres bits bajos fuera: eso es el pixel dentro de la casilla
+C 0x54B8 Y se empieza por la primera de las ocho casillas leidas
+
+C 0x5752 Se recuperan la posicion y el destino
+C 0x575F Hacia donde queda la nave respecto de la torre
+
+C 0x5799 Las cuatro fichas de 0xE7E4 y sus cuatro cuentas de 0xE53B
+C 0x57A4 En la zona 1 hay una ficha menos
+C 0x57A9 Cuatro bytes hacia atras por ficha
+
+C 0x5819 Tres fichas a la vez...
+
+C 0x592C Se retrocede en las dos listas a la vez
+C 0x5931 Cuatro bytes por ficha, de atras adelante
+C 0x5937 Y al acabar, las fichas suben a la pantalla
+
+C 0x4185 La pagina se llena de ceros de ocho en ocho
+C 0x418B Dos `inc h`: de un tercio al siguiente
+C 0x418D Y las cuatro pasadas que hay que dar
+
+C 0x4A56 El segundo `ex af,af'` deja A como estaba: solo se gasta tiempo
+C 0x4A5A BC lleva la cuenta de lo que falta
+
+C 0x4813 Los ocho registros del VDP a 0xE038 antes de subirlos
+C 0x481A Ocho bytes, que son los ocho registros
+C 0x4824 D empieza en 0x80: el numero de registro con el bit 7 puesto
+
+C 0x5322 La misma pagina otra vez, ahora como origen y como destino
+C 0x532D Cinco filas, y entre una y otra 0x1F bytes
+
+C 0x54F3 Ocho pixeles a un lado y 0x18 al otro: la casilla de la fila de abajo
+C 0x54FB Y a mirar esa
+
+C 0x5C1A Dos bytes por dibujo
+C 0x5C1F Y los otros dos, dos casillas mas alla
+
+C 0x4641 El byte siguiente del dibujo, sin los tres bits bajos
+C 0x4645 Cuatro `rra`: el nibble alto es el dibujo
+
+C 0x4663 Los seis bits bajos son la cuenta
+C 0x4667 C queda con la altura de la ficha
+C 0x466C IX vuelve al principio del destino
+
+C 0x4826 Los ocho registros, uno detras de otro
+C 0x482B El numero de registro sube con cada vuelta
+
+C 0x4E05 El cartel de la introduccion
+C 0x4E0B Y 0xE558 lleva lo que dura en pantalla
+
+C 0x5BB1 Las catorce fichas de explosion a la VRAM 0x3B20
+C 0x5BBF Cada una con su cuenta atras en 0xE530
+
+C 0x5BCE Cuatro bytes por ficha
+C 0x5BD2 Y la cuenta de al lado
+
+C 0x5CF9 +9 es el sonido que va encadenado detras de este
+C 0x5D07 Se arranca con D a 1: sin mirar prioridades
+
+C 0x48D3 Un byte por vuelta, 0x1F8 por tanda
+C 0x48DA Ocho tandas: la tabla de color entera
+
+C 0x4A6D Se descuenta y se sigue mientras quede
+C 0x4A72 Las interrupciones vuelven aqui, no antes
+
+C 0x4EB7 Se guarda el principio de la tanda de cuatro
+C 0x4EBD Diez tandas iguales
+
+C 0x526E 0xD1 es el tile que se planta
+C 0x5271 Y cuatro filas mas abajo, otro
+
+C 0x58CE 0xBA es el dibujo del disparo que sube
+C 0x58D3 Y el sonido 3, el de que alguien dispara
+
+C 0x5DBC Se cierra el canal en la mezcla del PSG
+C 0x5DC2 Y el numero de sonido a cero: el canal queda libre
+
+L 0x4045 LA_INTERRUPCION_TERMINA
+L 0x406E PINTA_SIGUIENTE_BYTE
+L 0x40AD AQUI_SE_QUEDA
+L 0x40CB RETOCA_LOS_PATRONES
+L 0x410D LLENA_UNA_TANDA
+L 0x410F LLENA_UN_BYTE
+L 0x4121 SALTA_EL_CINCO
+L 0x4126 SIGUIENTE_TANDA
+L 0x4128 COPIA_LA_RUTINA_A_LA_RAM
+L 0x4183 LIMPIA_EL_BUFFER
+L 0x4185 LIMPIA_UNA_PAGINA
+L 0x4197 EL_SEGUNDO_RECORRIDO
+L 0x41A4 SIN_REPETICIONES
+L 0x41A9 SEPARA_LAS_COPIAS
+L 0x41B0 DESPLIEGA_ESTE_TRAMO
+L 0x41BC EL_TERCER_RECORRIDO
+L 0x41CE PINTA_UNA_DE_LAS_SEIS
+L 0x463F DESPLIEGA_MEDIA_FICHA
+L 0x4641 DESPLIEGA_UN_BYTE
+L 0x4649 ESCRIBE_CON_LA_RUTINA_DE_LA_RAM
+L 0x4653 SIGUIENTE_COLUMNA
+L 0x465C DESPLIEGA_DESDE_AQUI
+L 0x4663 SACA_LA_CUENTA
+L 0x466C VUELVE_AL_DESTINO
+L 0x4673 DESPLIEGA_UNA_FILA
+L 0x4674 DESPLIEGA_UNA_FICHA
+L 0x4675 DESPLIEGA_UN_PAR
+L 0x468C DESPLIEGA_TERMINA
+L 0x46A2 DESPACHA_POR_EL_ESTADO
+L 0x46AA LLAMA_AL_DESPACHADOR
+L 0x4721 ESPERA_DEL_ANUNCIO
+L 0x472C ELEGIDO_EL_MODO
+L 0x476E MIRA_AL_OTRO_JUGADOR
+L 0x4774 SIGUE_EL_OTRO
+L 0x47A2 PONE_ESTADO_13
+L 0x47AB ARRANCA_LA_PARTIDA
+L 0x47E0 LA_FILA_DEL_MENU
+L 0x4813 SUBE_LOS_REGISTROS_DEL_VDP
+L 0x4826 SUBE_UN_REGISTRO
+L 0x4848 MANDA_EL_REGISTRO_15
+L 0x485B GUARDA_LO_PULSADO
+L 0x48D3 PINTA_UN_BYTE_DE_COLOR
+L 0x490F MONTA_EL_MENU
+L 0x492D SUMA_EL_BYTE_BAJO
+L 0x495E GUARDA_EL_ESCALON
+L 0x497F EL_RECORD_ES_ESTE
+L 0x49A4 PINTA_VIDAS_Y_ZONA
+L 0x49AA PINTA_EL_RECORD
+L 0x49B3 PINTA_LOS_DEL_JUGADOR
+L 0x49C8 PINTA_LA_ZONA_EN_CURSO
+L 0x49D0 PINTA_UN_BYTE_BCD
+L 0x49F7 ELIGE_EL_ROTULO
+L 0x4A01 PINTA_O_BORRA
+L 0x4A0F NAVE_O_HUECO
+L 0x4A14 PINTA_UNA_VIDA
+L 0x4A22 LA_SEGUNDA_FILA
+L 0x4A24 PINTA_UN_TILE_DE_LA_FILA
+L 0x4A4D BORRA_LA_TABLA_DE_NOMBRES
+L 0x4A55 MARGEN_DEL_VDP
+L 0x4A56 LLENA_UN_BYTE_DE_VRAM
+L 0x4A65 VUELCA_UN_BYTE
+L 0x4A69 VUELCA_ESTE_BYTE
+L 0x4A8A EL_TERCER_TERCIO
+L 0x4AAB LLENA_EL_COLOR_Y_SUBE
+L 0x4ACA PINTA_ROTULO_EN_DE
+L 0x4ACE LEE_EL_BYTE_DE_MANDO
+L 0x4CEC PINTA_UN_TILE_SEGUIDO
+L 0x4DD2 GUARDA_LA_NAVE_MOVIDA
+L 0x4DE3 BAJA_LAS_ACOMPANANTES
+L 0x4E90 BORRA_UN_BYTE
+L 0x4E9F BORRA_UN_TERCIO
+L 0x4EA1 BORRA_UN_BYTE_DEL_BUFFER
+L 0x4EB7 REPITE_UNA_FICHA
+L 0x4F05 MEDIA_CASILLA_MENOS
+L 0x4F08 POSICION_A_PIXEL
+L 0x4F30 LA_PRIMERA_LISTA
+L 0x4F3A DESDE_EL_PRINCIPIO
+L 0x4F3D LEE_LA_CUENTA
+L 0x4F3F PON_UNA_ESTRELLA
+L 0x4F8C PINTA_CASILLA_LLENA
+L 0x4F92 LA_CASILLA_A_MEDIAS
+L 0x4F9D BORRA_LA_DE_DETRAS
+L 0x4FAF GUARDA_LA_LLAMA
+L 0x4FD0 COPIA_UNA_FICHA
+L 0x4FE3 SUBE_LAS_CUATRO
+L 0x4FF3 APAGA_FICHAS_DESDE_HL
+L 0x5015 DESPLIEGA_EN_EL_BUFFER
+L 0x502C PREMIO_SORTEADO
+L 0x502D SUMA_ESTE_PREMIO
+L 0x5091 EL_ROTULO_DE_LA_ZONA
+L 0x50F4 SUBE_LAS_FICHAS_DE_LA_NAVE
+L 0x5122 SUENA_SI_HA_CAMBIADO
+L 0x5126 CUENTA_EL_FOTOGRAMA
+L 0x5143 EL_TERCER_CHOQUE
+L 0x5146 MIRA_SI_HA_CHOCADO
+L 0x5161 EL_RESTO_DEL_FOTOGRAMA
+L 0x518D LEE_EL_MANDO
+L 0x5194 MIRA_ABAJO
+L 0x5198 MIRA_IZQUIERDA
+L 0x519C MIRA_DERECHA
+L 0x51A0 TOPE_DE_COLUMNA
+L 0x51A6 TOPE_POR_LA_IZQUIERDA
+L 0x51AB TOPE_DE_FILA
+L 0x51B0 LA_NAVE_YA_ESTA_PUESTA
+L 0x51C6 OCUPA_EL_HUECO
+L 0x51D3 EL_DIBUJO_DEL_DISPARO
+L 0x51FA DEJA_EL_HUECO_LIBRE
+L 0x525A REMATA_EL_ROTULO
+L 0x526E PLANTA_LAS_DOS_PIEZAS
+L 0x52B1 Y_A_PINTAR_LA_BARRA
+L 0x52CA REHACE_LAS_FICHAS
+L 0x52E4 TOPE_DE_DIFICULTAD
+L 0x52EA EL_DOBLE_CONTRA_EL_RELOJ
+L 0x5322 CORRE_EL_BUFFER
+L 0x532F CORRE_UNA_FILA
+L 0x5343 METE_LA_COLUMNA_NUEVA
+L 0x535B MIRA_SI_SE_ACABA_LA_ZONA
+L 0x536C MARCA_EL_TRAMO_FINAL
+L 0x5388 ZONA_SUPERADA
+L 0x53AC CADA_CUATRO_ZONAS
+L 0x53D7 GUARDA_LA_LONGITUD
+L 0x53EC LEE_LA_FICHA
+L 0x540D SIGUIENTE_FICHA
+L 0x5415 LA_FICHA_REVIENTA
+L 0x542C MIRA_ESTE_DISPARO
+L 0x5450 NO_HA_CHOCADO
+L 0x5451 SIGUIENTE_DISPARO
+L 0x5476 MEDIA_CASILLA_MAS
+L 0x5483 LEE_CUATRO_CASILLAS
+L 0x5485 LEE_UNA_CASILLA
+L 0x54A8 REDONDEA_A_CASILLA
+L 0x54B8 MIRA_LA_PRIMERA
+L 0x54E1 SIGUIENTE_CASILLA
+L 0x54E2 AVANZA_EN_LA_LISTA
+L 0x54F3 BAJA_UNA_FILA
+L 0x5509 MEDIO_TILE_A_UN_LADO
+L 0x5511 MEDIO_TILE_DE_VUELTA
+L 0x5518 LOS_MARGENES_DEL_TILE
+L 0x5542 LA_NAVE_HA_TOCADO
+L 0x5551 MIRA_ESTA_FICHA
+L 0x556E LA_SIGUIENTE_FICHA
+L 0x557F MIRA_ESTA_CON_LA_BOMBA
+L 0x559C LA_SIGUIENTE_CON_LA_BOMBA
+L 0x567B ABRE_BOQUETE_AQUI
+L 0x5686 CORRE_MEDIA_CASILLA
+L 0x5693 LIMPIA_LA_FILA
+L 0x56A9 LA_FILA_DE_ABAJO
+L 0x56B6 PONE_LA_CUESTA
+L 0x56B7 LIMPIA_EN_MEDIO
+L 0x56C0 LA_OTRA_CUESTA
+L 0x56D1 EL_BOQUETE_A_LA_VRAM
+L 0x56DC MANDA_LA_DIRECCION
+L 0x56DF ESCRIBE_EN_LA_VRAM
+L 0x56E8 UN_BYTE_DEL_BOQUETE
+L 0x56F5 LA_SEGUNDA_FILA_DEL_BOQUETE
+L 0x5704 EL_BOQUETE_ESTA_HECHO
+L 0x571F APUNTA_A_LA_NAVE
+L 0x572D LA_SEGUNDA_TANDA
+L 0x5741 ADELANTA_EL_DISPARO
+L 0x5747 GUARDA_LA_COLUMNA
+L 0x5752 LA_TERCERA_TANDA
+L 0x5763 POR_EL_OTRO_LADO
+L 0x576B BUSCA_DE_DONDE_SALE
+L 0x5799 RECORRE_LAS_CUATRO
+L 0x57AD BUSCA_UNA_LIBRE
+L 0x57D2 CUANTO_LLEVA_LA_FASE
+L 0x57DE COLUMNA_AL_AZAR
+L 0x57E3 GUARDA_LA_COLUMNA_2
+L 0x5801 LEE_ESTA_CASILLA
+L 0x5823 MIRA_SI_ESTA_LIBRE
+L 0x5863 CUANTOS_CABEN
+L 0x5884 HACIA_EL_OTRO_LADO
+L 0x588A SUMA_EL_ALCANCE
+L 0x5895 LA_POSICION_DE_LA_NAVE
+L 0x58A6 PASA_A_CASILLA
+L 0x58A9 DIVIDE_ENTRE_OCHO
+L 0x58AF LA_PAGINA_DEL_BUFFER
+L 0x58B1 MIRA_SI_ES_TORRE
+L 0x58C4 MIRA_ESTE_HUECO
+L 0x58EE RECORRE_LAS_FICHAS
+L 0x5904 APLICA_EL_PASO
+L 0x592C ATRAS_EN_LAS_DOS_LISTAS
+L 0x593D RECORRE_LAS_FICHAS_1
+L 0x5959 EL_PASO_DE_SUBIDA
+L 0x5964 GUARDA_EL_PASO
+L 0x596B APLICA_EL_PASO_1
+L 0x5989 DA_LA_VUELTA_AL_SENTIDO
+L 0x598A RECUPERA_LA_FICHA
+L 0x598B ATRAS_EN_LA_LISTA
+L 0x59AC GUARDA_EL_LADO
+L 0x59B0 Y_A_SUBIR_LAS_FICHAS
+L 0x59B7 DEJA_LA_FICHA_LIBRE
+L 0x59D5 MITAD_DE_VELOCIDAD
+L 0x59E2 APLICA_EL_PASO_2
+L 0x5A00 SE_HA_SALIDO
+L 0x5A02 LA_FICHA_DE_ANTES
+L 0x5A18 MIRA_ESTE_HUECO_2
+L 0x5A27 PINTA_EL_DISPARO
+L 0x5A50 REPONE_LO_QUE_HABIA
+L 0x5A59 RECUPERA_EL_HUECO
+L 0x5A5A EL_SIGUIENTE_HUECO
+L 0x5AB8 COLOCA_LA_EXPLOSION
+L 0x5ABB DA_DE_BAJA_EL_DISPARO
+L 0x5ABC BORRA_EL_DISPARO
+L 0x5AD9 LEE_LAS_CASILLAS_DE_LA_BOMBA
+L 0x5B00 LA_CUARTA_CASILLA
+L 0x5B06 MIRA_LAS_CUATRO
+L 0x5B12 COLOCA_EL_CHOQUE
+L 0x5B17 MEDIA_CASILLA_DE_LA_BOMBA
+L 0x5B1E MIRA_CONTRA_QUE_DA
+L 0x5B56 LA_EXPLOSION_DE_LA_BOMBA
+L 0x5B62 SUBE_LA_FICHA_APAGADA
+L 0x5B8C BUSCA_HUECO_DE_EXPLOSION
+L 0x5B94 OCUPA_EL_HUECO_2
+L 0x5BC4 MIRA_ESTA_EXPLOSION
+L 0x5BCE LA_SIGUIENTE_EXPLOSION
+L 0x5BF5 GUARDA_LOS_DIBUJOS
+L 0x5C1A LOS_OTROS_DOS_DIBUJOS
+L 0x5C4B BORRA_ESTE_DISPARO
+L 0x5C5B EL_SIGUIENTE_A_BORRAR
+L 0x5C83 VUELVE_A_MONTAR_EL_DECORADO
+L 0x5CB7 LOS_SONIDOS_CORTOS
+L 0x5CC8 SIN_MIRAR_PRIORIDAD
+L 0x5CE0 ARRANCA_UN_CANAL
+L 0x5D06 ARRANCA_EL_ENCADENADO
+L 0x5D23 COLOCA_EL_BIT_DEL_CANAL
+L 0x5D2D ABRE_EL_CANAL
+L 0x5D2E MANDA_LA_MEZCLA
+L 0x5D3D EL_CANAL_SIGUIENTE
+L 0x5D80 EVENTO_DE_RUIDO
+L 0x5D97 EL_VOLUMEN_DEL_EFECTO
+L 0x5DDE BAJA_DOS_VECES
+L 0x5DE1 BAJA_EL_VOLUMEN
+L 0x5E43 BAJA_UNA_OCTAVA
+
+C 0x408C El cero que se propaga por toda la RAM
+C 0x4095 La direccion de la rutina de interrupcion
+C 0x409D Y con el candado echado se hace el arranque largo
+C 0x40A0 El PSG y la VRAM
+C 0x40A3 Y el menu de arranque
+C 0x40A6 Leer el estado del VDP deja limpia la peticion de interrupcion
+
+C 0x4034 El bit 0 de 0xE005 es el candado
+C 0x403A Los mandos, antes que el paso del juego
+C 0x403D Y el paso del juego
+
+C 0x40C5 Un byte por retoque
+C 0x40C9 Siete retoques
+C 0x40CE Y de nueve en nueve bytes en la VRAM
+
+C 0x4131 Siete bytes, que es lo que ocupa la rutina
+C 0x4138 El primer dibujo, arriba
+C 0x413E Y el mismo, mas abajo
+C 0x4144 Entre los dos, el suelo raso
+C 0x4147 De 0xECBB a 0xECBC: un `ldir` que se copia a si mismo, otra vez
+C 0x4154 El tercer dibujo
+C 0x4162 Y el cuarto tramo, en la pagina de al lado
+C 0x4170 Los dos ultimos dibujos
+C 0x417E El buffer de 0xE800, cuatro tercios de 0xBA bytes
+
+C 0x4866 Con `out (c),b` porque el numero de fila esta en B
+C 0x4868 Y la fila se lee del 0xA9
+C 0x486A Las teclas pulsadas vienen a cero: el `cpl` las pone a uno
+C 0x4870 Otra vez el mismo par de puertos
+C 0x4875 Dos `rrca` colocan las flechas donde las pone el joystick
+C 0x487C Se guarda lo que se lleva armado
+C 0x4884 Y lo que queda por colocar
+
+C 0x4E28 El segundo
+C 0x4E2B El tercero
+C 0x4E2E Y el cuarto
+C 0x4E31 A cero lo que viene detras
+C 0x4E34 En las dos paginas del buffer
+C 0x4E43 Cuatro bytes seguidos de 0xE534
+C 0x4E4D Y dos mas en 0xE55F
+C 0x4E56 0xE54F a uno: hay que rehacer las fichas
+C 0x4E5E Y 0xE548, que cuenta lo que puede salir
+C 0x4E63 El rotulo de la zona
+C 0x4E66 El deposito lleno
+C 0x4E69 Y los registros del VDP
+
+C 0x5215 Se le da la vuelta al bit
+C 0x521C La pagina, ya montada en H
+C 0x5224 Y de ahi a la VRAM
+C 0x5229 Detras, correr el buffer una columna
+C 0x5231 La clase 3 es la unica que sigue
+C 0x5235 0xE056 tiene que valer uno
+C 0x5240 0xBB es la columna exacta del cambio
+C 0x5248 Se apunta que ya se ha pasado
+C 0x5257 Y se pinta el rotulo
+C 0x525D Con 0xE54A a cero no hay nada mas
+C 0x5260 La columna del deposito
+C 0x5264 Cuatro columnas antes
+C 0x5269 Si se ha pasado, se deja a cero
+
+C 0x5A62 El primer byte de la ficha es el paso
+C 0x5A63 Y los dos siguientes, donde esta
+C 0x5A69 Una casilla atras: de donde se borra
+C 0x5A75 Los cinco bits bajos son la columna dentro de la fila
+C 0x5A7C La casilla de al lado tambien
+C 0x5A80 Tambien tiene que ser cielo
+C 0x5A85 Se guarda todo antes de mirar los choques
+C 0x5A8E Con carry ya ha dado a algo: nada mas que hacer
+C 0x5A95 Y se avanza una casilla en el sentido que lleve
+
+C 0x5B1E Se guardan la casilla y la posicion
+C 0x5B21 De la posicion sale el pixel
+C 0x5B24 0xE52E guarda donde poner la explosion
+C 0x5B27 Y el tile es el que elige los margenes
+C 0x5B32 Por cuatro: cuatro bytes por familia
+C 0x5B37 La posicion de la bomba
+C 0x5B3B Y a mirar si se pisan
+C 0x5B42 Se guarda todo otra vez
+C 0x5B4C Se recupera para el boquete
+C 0x5B52 Y la explosion va donde se apunto
+
+C 0x5904 El paso que toca esta vez
+C 0x5907 Se guarda ya movida
+C 0x590A Los dos bytes de la otra lista
+C 0x5912 Y se suma al sitio de la ficha
+C 0x5918 Se guarda la ficha antes de mirar el terreno
+C 0x5924 Y se compara con el borde de abajo
+
+C 0x5432 Los dos bytes del disparo
+C 0x5435 Y la posicion de la nave
+C 0x5446 Se guarda el margen del primer eje
+C 0x544A Y se mira el otro
+C 0x5451 Dos bytes por disparo
+
+C 0x5A1B Por debajo de la fila 0x38 no hay disparo aqui
+C 0x5A1E Se aparta la fila
+C 0x5A27 El tile del disparo, en su sitio nuevo
+C 0x5A31 Al borde de la fila se corta
+C 0x5A38 Y por encima de la fila 0x38 tampoco se pinta
+C 0x5A46 Aqui se planta el tile
+C 0x5A4D El `ex af,af'` recupera si hay que borrar detras
+
+C 0x5505 Ocho pixeles a un lado
+C 0x550E Y ocho por el otro
+C 0x5515 O cuatro de vuelta
+C 0x5521 La entrada de la tabla
+C 0x5524 Y la prueba de siempre
+C 0x552D 0xE51D a uno: la nave ha tocado
+C 0x5532 De la posicion sale la casilla
+C 0x553C Y las fichas suben a la pantalla
+
+C 0x51CC 0x43 o 0x23 de alcance, segun hacia donde salga
+C 0x51D6 El dibujo, en el segundo byte del hueco
+C 0x51D8 La posicion de la nave
+C 0x51DF Se lee el tile de donde iria
+C 0x51E9 Y ahi se guarda, en los dos bytes del hueco
+C 0x51EC Quince pixeles por delante de la nave
+
+C 0x53B3 El marcador otra vez
+C 0x53BD Y los registros del VDP, que el decorado nuevo puede cambiarlos
+
+C 0x4DB7 El decorado de la introduccion
+C 0x4DC0 La posicion de la nave
+C 0x4DC3 Una fila menos: la nave viene bajando
+C 0x4DDC Las dos fichas de detras
+C 0x4DE3 Una fila menos tambien
+C 0x4DE9 Y las fichas suben a la pantalla
+C 0x4DF5 La fase nueva
+C 0x4DFF 0xE7DF a 4: el dibujo del tren de aterrizaje
+
+C 0x54C3 Y con el otro de la pareja
+C 0x54D4 La entrada de la tabla de formas
+C 0x54DC En este eje no se tocan
+C 0x54E8 0x24 casillas: el ancho que se mira
+
+B 0x5305 El submodo 1: el gemelo del submodo 0 para la mitad de arriba
+C 0x530A Con 0xE054 a cero se vuelve por aqui, que es lo que pasa siempre en esta version
+C 0x5313 0xEC00 o 0xEE00, que MONTA_EL_MAPA si monta (0x4147 y 0x4162)
+
+C 0x5356 Y aqui se corta si hay techo: la cuenta de columnas que queda para el final de la zona la lleva el submodo 0, no los dos
+
