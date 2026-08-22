@@ -31,8 +31,10 @@ Salen tres PNG:
                   aqui dentro
     sprites.png   los dibujos de sprite de 16x16 de la VRAM 0x1800, que es el
                   unico sitio donde escribe el flujo de 0x443A
-    logo.png      los 26 tiles del KONAMI grande de 0x4CFA, montados como los
-                  monta SUBE_LOGOTIPO (0x4CBF): tres, once y doce
+    logo_konami.png  los 26 tiles del KONAMI grande de 0x4CFA, montados como
+                  los monta SUBE_LOGOTIPO (0x4CBF): tres, once y doce. OJO:
+                  este es el logotipo de la CASA. El rotulo del JUEGO no sale
+                  de aqui, lo recorta tools/recorta_rotulo.py de la captura
 """
 import os
 import struct
@@ -263,7 +265,7 @@ def main():
     v = monta_el_titulo(rom)
     pinta_tiles(v, os.path.join(salida, "tiles.png"))
     pinta_sprites(v, os.path.join(salida, "sprites.png"))
-    pinta_logo(v, os.path.join(salida, "logo.png"))
+    pinta_logo(v, os.path.join(salida, "logo_konami.png"))
     print("  tabla de patrones : %4d de 2048 bytes puestos por el cartucho"
           % sum(v.puesto[0x2000:0x2800]))
     print("  dibujos de sprite : %4d de  512 bytes en la VRAM 0x1800"

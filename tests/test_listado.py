@@ -370,6 +370,42 @@ class TestWeb(unittest.TestCase):
         self.assertEqual(CODIGO + DATOS, FIN - ORG,
                          "las cifras publicadas no suman los 8192 bytes")
 
+    def test_la_cabecera_lleva_el_rotulo_DEL_JUEGO(self):
+        """Y no el logotipo de Konami, que es el error que ya se colo una vez.
+
+        Las dos imagenes son PNG pequenos con nombres parecidos en la misma
+        carpeta, van embebidas en base64 y en la pagina se ven las dos, asi que
+        confundirlas no salta a la vista: la portada salio publicada con el
+        logotipo de la CASA de cabecera en vez del rotulo del JUEGO.
+        """
+        import base64
+        img = os.path.join(DOCS, "imagenes")
+        juego = os.path.join(img, "logo.png")
+        konami = os.path.join(img, "logo_konami.png")
+        for f in (juego, konami):
+            self.assertTrue(os.path.exists(f), "falta %s" % f)
+
+        def b64(f):
+            with open(f, "rb") as fh:
+                return base64.b64encode(fh.read()).decode()
+
+        for pagina in (os.path.join(DOCS, "index.html"),
+                       os.path.join(DOCS, "es", "index.html")):
+            if not os.path.exists(pagina):
+                continue
+            with open(pagina, encoding="utf-8") as f:
+                texto = f.read()
+            m = re.search(r'<header class="top">\s*<img src="data:image/png;'
+                          r'base64,([^"]+)"', texto)
+            self.assertIsNotNone(m, "%s no tiene imagen de cabecera"
+                                 % os.path.basename(pagina))
+            self.assertNotEqual(m.group(1), b64(konami),
+                                "%s lleva el logotipo de KONAMI de cabecera"
+                                % os.path.basename(pagina))
+            self.assertEqual(m.group(1), b64(juego),
+                             "%s no lleva el rotulo del juego de cabecera"
+                             % os.path.basename(pagina))
+
     def test_las_paginas_no_inventan_direcciones(self):
         """Cada 0xNNNN del cartucho que se cite tiene que existir."""
         vivas = set(re.findall(r";([0-9a-f]{4})(?:\s|$)", asm(), re.M))

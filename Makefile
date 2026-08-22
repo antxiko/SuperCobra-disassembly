@@ -95,6 +95,7 @@ clean:
 imagenes: $(ROM)
 	@mkdir -p docs/imagenes
 	python3 tools/graficos.py $(ROM) docs/imagenes
+	python3 tools/recorta_rotulo.py docs/imagenes/titulo.png docs/imagenes/logo.png
 
 web: imagenes
 	python3 tools/md2html.py docs en

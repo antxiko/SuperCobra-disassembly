@@ -7,12 +7,16 @@ autocontenida, con las imagenes embebidas como data URI.
 La galeria de este proyecto tiene dos clases de imagen y estan separadas a
 proposito:
 
-  * las RECONSTRUIDAS -tiles.png, sprites.png, logo.png- no son capturas: las
-    dibuja tools/graficos.py repitiendo instruccion a instruccion los dos
-    interpretes de dibujo del cartucho (0x4068 y 0x4AC6) sobre una memoria de
-    video vacia. Si un rango estuviera mal etiquetado, saldria ruido.
+  * las RECONSTRUIDAS -tiles.png, sprites.png, logo_konami.png- no son
+    capturas: las dibuja tools/graficos.py repitiendo instruccion a instruccion
+    los dos interpretes de dibujo del cartucho (0x4068 y 0x4AC6) sobre una
+    memoria de video vacia. Si un rango estuviera mal etiquetado, saldria ruido.
   * las CAPTURAS -titulo.png, logotipo.png, partida.png- son pantallas reales
     de openMSX, sacadas sin tocar el teclado con tools/omsx_capturas.tcl.
+
+El rotulo de la cabecera, logo.png, es el del propio juego: lo recorta
+tools/recorta_rotulo.py de la captura del titulo. NO es el logotipo de Konami,
+que va en la galeria con su nombre.
 
 Uso: make_web.py <docs/imagenes> <salida.html> <idioma>
 """
@@ -40,13 +44,13 @@ TXT = {
     "es": dict(
         titulo="Super Cobra — desensamblado comentado",
         aviso="<b>Aquí hay dos clases de imagen y no se mezclan.</b> Los "
-              "tiles, los dibujos de sprite y el logotipo están "
+              "tiles, los dibujos de sprite y el logotipo de Konami están "
               "<b>reconstruidos</b>: los dibuja una herramienta que repite, "
               "instrucción a instrucción, los dos intérpretes de dibujo del "
-              "cartucho sobre una memoria de vídeo vacía. Las tres pantallas "
-              "son <b>capturas de openMSX</b>, y lo dicen en el pie. El "
-              "listado y las cifras salen del binario y se reproducen con "
-              "<code>make</code>.",
+              "cartucho sobre una memoria de vídeo vacía. Las pantallas son "
+              "<b>capturas de openMSX</b>, y lo dicen en el pie; el rótulo de "
+              "aquí arriba está recortado de una de ellas. El listado y las "
+              "cifras salen del binario y se reproducen con <code>make</code>.",
         claim="Ocho kilobytes en los que el hilo principal no hace nada: "
               "arranca, engancha la interrupción y se queda en un "
               "<code>jr $</code> para siempre. El juego entero cabe dentro "
@@ -80,13 +84,14 @@ TXT = {
     "en": dict(
         titulo="Super Cobra — a commented disassembly",
         aviso="<b>There are two kinds of picture here and they are not "
-              "mixed.</b> The tiles, the sprite drawings and the logo are "
-              "<b>reconstructed</b>: they are drawn by a tool that repeats, "
-              "instruction by instruction, the cartridge's two drawing "
-              "interpreters over an empty video memory. The three screens are "
-              "<b>openMSX screenshots</b>, and their captions say so. The "
-              "listing and the numbers come from the binary and are "
-              "reproducible with <code>make</code>.",
+              "mixed.</b> The tiles, the sprite drawings and the Konami logo "
+              "are <b>reconstructed</b>: they are drawn by a tool that "
+              "repeats, instruction by instruction, the cartridge's two "
+              "drawing interpreters over an empty video memory. The screens "
+              "are <b>openMSX screenshots</b>, and their captions say so; the "
+              "title above is cropped from one of them. The listing and the "
+              "numbers come from the binary and are reproducible with "
+              "<code>make</code>.",
         claim="Eight kilobytes in which the main thread does nothing: it "
               "starts up, hooks the interrupt and settles into a "
               "<code>jr $</code> forever. The whole game fits inside the "
@@ -340,7 +345,7 @@ GALERIA = [
      "RECONSTRUCTED from 0x443A — the 16×16 sprite drawings. That stream is "
      "the only thing in the whole cartridge writing to VRAM 0x1800, which is "
      "where VDP register 6 puts the sprite pattern table"),
-    ("logo.png",
+    ("logo_konami.png",
      "RECONSTRUIDA de 0x4CFA — los 26 tiles del KONAMI grande, 147 bytes "
      "idénticos a los de Athletic Land, montados como los monta el cartucho: "
      "tres tiles arriba, once en medio y doce abajo",
@@ -362,6 +367,8 @@ def main(argv):
     imgdir, salida, idioma = argv[1:4]
     t = TXT[idioma]
 
+    # El rotulo del JUEGO, no el de Konami: logo.png lo recorta
+    # tools/recorta_rotulo.py de la captura del titulo.
     ruta_logo = os.path.join(imgdir, "logo.png")
     cabecera = (f'<img src="{img64(ruta_logo)}" alt="Super Cobra">'
                 if os.path.exists(ruta_logo) else "<h1>Super Cobra</h1>")
