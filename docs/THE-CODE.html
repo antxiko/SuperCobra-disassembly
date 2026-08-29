@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The code — Super Cobra (1983)</title>
 <style>
 :root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
@@ -101,7 +103,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <table><tr><th></th><th></th></tr><tr><td>00</td><td>uploads the VDP registers and gets the screen up</td></tr><tr><td>01</td><td>raises the big KONAMI one row every two frames</td></tr><tr><td>02, 03, 05</td><td>waits</td></tr><tr><td>04</td><td>clears and builds the title screen</td></tr><tr><td>06</td><td>builds the PLAY SELECT menu</td></tr><tr><td>07</td><td>waits for a choice</td></tr><tr><td>08</td><td>the attract demo</td></tr><tr><td>09</td><td>takes a life off and announces whose turn it is</td></tr><tr><td>10</td><td>clears the announcement and lets the player go</td></tr><tr><td>11</td><td><b>the game</b>; it stays here until 0xE06F goes off</td></tr><tr><td>12</td><td>checks whether the active player has lives left</td></tr><tr><td>13</td><td>changes turns</td></tr><tr><td>14</td><td>end of game, unless the other player is still alive</td></tr></table>
 <p>08 is the odd one: it is the only one entered without a <code>push</code>, so its <code>ret</code> goes back to the caller instead of to the dispatcher.</p>
 <p><img src="imagenes/logotipo.png" alt="The logo rising"></p>
-<p>*State 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) raises the KONAMI from the bottom up, one row of 32 bytes per call, and draws it split in three: three tiles on top, eleven in the middle and twelve below.*</p>
+<p><em>State 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) raises the KONAMI from the bottom up, one row of 32 bytes per call, and draws it split in three: three tiles on top, eleven in the middle and twelve below.</em></p>
 <h2 id="the-eight-submodes">The eight submodes</h2>
 <p>Inside a game step, the table at 0x516F is indexed with <b>the frame counter</b> and</p>
 <ol><li>These are not states that follow one another: they are eight jobs that take</li></ol>
@@ -117,7 +119,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <pre><code>E5F8  32 FD E5     ld (0E5FDh),a
 E5FB  DD 70 00     ld (ix+000h),b
 E5FE  C9           ret</code></pre>
-<p>0xE5FD **is the third byte of the <code>ld (ix+000h),b</code>**, that is, its own displacement. The routine writes the displacement over itself with A and then stores B: it is <code>ld (IX+A),B</code>, which the Z80 cannot do, because IX&#x27;s displacement is a fixed byte of the opcode and not a register.</p>
+<p>0xE5FD <b>is the third byte of the <code>ld (ix+000h),b</code></b>, that is, its own displacement. The routine writes the displacement over itself with A and then stores B: it is <code>ld (IX+A),B</code>, which the Z80 cannot do, because IX&#x27;s displacement is a fixed byte of the opcode and not a register.</p>
 <p>That is why it has to run in RAM, and why those are <b>the only seven bytes of this cartridge that do not run from ROM</b>.</p>
 <h2 id="collisions">Collisions</h2>
 <p><code>HAY_CHOQUE</code> (0x53DC) is one single test for everything: it subtracts the other one&#x27;s position and its width, adds its own width, and if that does not overflow, they do not touch on that axis. The same on the other axis, and there is a collision only if they overlap on both. The sizes always come in (HL), and each thing brings its own table:</p>

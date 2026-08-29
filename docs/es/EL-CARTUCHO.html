@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>El cartucho — Super Cobra (1983)</title>
 <style>
 :root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
@@ -98,8 +100,8 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <p><em>Los 256 tiles del tercio de arriba después de montar la pantalla del título. Los grises son los que el cartucho no trae: ahí es donde caen las letras que se copian de la BIOS.</em></p>
 <h2 id="los-dos-interpretes-de-dibujo">Los dos intérpretes de dibujo</h2>
 <p>El cartucho no guarda los gráficos en crudo. Tiene dos formatos y dos rutinas:</p>
-<p>**<code>PINTA_DIBUJO</code> (0x4068)** — dirección de memoria de vídeo, y detrás los bytes tal cual. <code>0xFE</code> cierra el tramo y manda leer otra dirección; <code>0xFF</code> cierra el dibujo. Su gemela <code>BORRA_DIBUJO</code> (0x4064) es <b>la misma rutina</b>: entra por dos bytes antes con C = 0x00 en vez de 0xFF, y el <code>and c</code> de 0x4076 convierte cada byte en un cero. Un solo bucle pinta y borra.</p>
-<p>**<code>PINTA_ROTULO</code> (0x4AC6)** — la versión comprimida. Un byte de mando: con el bit 7 puesto vienen C bytes distintos, sin él se repite uno C veces. <code>0x80</code> abre otro tramo en otra dirección y <code>0x00</code> cierra.</p>
+<p><b><code>PINTA_DIBUJO</code> (0x4068)</b> — dirección de memoria de vídeo, y detrás los bytes tal cual. <code>0xFE</code> cierra el tramo y manda leer otra dirección; <code>0xFF</code> cierra el dibujo. Su gemela <code>BORRA_DIBUJO</code> (0x4064) es <b>la misma rutina</b>: entra por dos bytes antes con C = 0x00 en vez de 0xFF, y el <code>and c</code> de 0x4076 convierte cada byte en un cero. Un solo bucle pinta y borra.</p>
+<p><b><code>PINTA_ROTULO</code> (0x4AC6)</b> — la versión comprimida. Un byte de mando: con el bit 7 puesto vienen C bytes distintos, sin él se repite uno C veces. <code>0x80</code> abre otro tramo en otra dirección y <code>0x00</code> cierra.</p>
 <h2 id="los-sprites">Los sprites</h2>
 <p>Los patrones de sprite tienen un solo proveedor: el flujo de 0x443A, que es lo único de todo el cartucho que escribe en la memoria de vídeo 0x1800. Son 144 bytes en 0x1800 y 328 en 0x18A8.</p>
 <p><img src="../imagenes/sprites.png" alt="Los dibujos de sprite"></p>

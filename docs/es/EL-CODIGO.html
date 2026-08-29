@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>El código — Super Cobra (1983)</title>
 <style>
 :root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
@@ -101,7 +103,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <table><tr><th></th><th></th></tr><tr><td>00</td><td>sube los registros del VDP y deja la pantalla puesta</td></tr><tr><td>01</td><td>sube el KONAMI grande una fila cada dos fotogramas</td></tr><tr><td>02, 03, 05</td><td>esperas</td></tr><tr><td>04</td><td>limpia y monta la pantalla del título</td></tr><tr><td>06</td><td>monta el menú de PLAY SELECT</td></tr><tr><td>07</td><td>espera a que se elija</td></tr><tr><td>08</td><td>la demostración</td></tr><tr><td>09</td><td>descuenta una vida y anuncia de quién es el turno</td></tr><tr><td>10</td><td>borra el anuncio y suelta al jugador</td></tr><tr><td>11</td><td><b>el juego</b>; aquí se está hasta que 0xE06F se apaga</td></tr><tr><td>12</td><td>mira si al jugador activo le quedan vidas</td></tr><tr><td>13</td><td>cambia el turno</td></tr><tr><td>14</td><td>fin de partida, salvo que el otro jugador siga vivo</td></tr></table>
 <p>El 08 es el raro: es el único al que se entra sin <code>push</code>, así que su <code>ret</code> vuelve al llamador en vez de al despachador.</p>
 <p><img src="../imagenes/logotipo.png" alt="El logotipo subiendo"></p>
-<p>*El estado 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) sube el KONAMI de abajo arriba, una fila de 32 bytes por llamada, y lo pinta partido en tres: tres tiles arriba, once en medio y doce abajo.*</p>
+<p><em>El estado 01. <code>SUBE_LOGOTIPO</code> (0x4CBF) sube el KONAMI de abajo arriba, una fila de 32 bytes por llamada, y lo pinta partido en tres: tres tiles arriba, once en medio y doce abajo.</em></p>
 <h2 id="los-ocho-submodos">Los ocho submodos</h2>
 <p>Dentro de un paso de partida, la tabla de 0x516F se indexa con <b>el contador de fotogramas</b> y 7. No son estados que se sucedan: son ocho trabajos que se turnan, uno por fotograma, porque no caben todos en el mismo.</p>
 <table><tr><th></th><th></th></tr><tr><td>0</td><td>cambia de búfer y sube el decorado a la pantalla</td></tr><tr><td>1</td><td>el gemelo del 0 para la mitad de arriba</td></tr><tr><td>2 y 6</td><td>la llama del motor, y luego mueven lo que vuela</td></tr><tr><td>3</td><td>gasta combustible</td></tr><tr><td>4</td><td>mueve lo que vuela, <b>sin</b> tocar la llama</td></tr><tr><td>5</td><td>suelta lo que dispara el decorado</td></tr><tr><td>7</td><td>la dificultad</td></tr></table>
@@ -115,7 +117,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <pre><code>E5F8  32 FD E5     ld (0E5FDh),a
 E5FB  DD 70 00     ld (ix+000h),b
 E5FE  C9           ret</code></pre>
-<p>0xE5FD **es el tercer byte del <code>ld (ix+000h),b</code>**, o sea su propio desplazamiento. La rutina se escribe encima el desplazamiento con A y entonces guarda B: es <code>ld (IX+A),B</code>, que el Z80 no sabe hacer, porque el desplazamiento de IX es un byte fijo del opcode y no un registro.</p>
+<p>0xE5FD <b>es el tercer byte del <code>ld (ix+000h),b</code></b>, o sea su propio desplazamiento. La rutina se escribe encima el desplazamiento con A y entonces guarda B: es <code>ld (IX+A),B</code>, que el Z80 no sabe hacer, porque el desplazamiento de IX es un byte fijo del opcode y no un registro.</p>
 <p>Por eso hay que ejecutarla en RAM, y por eso son <b>los únicos siete bytes de este cartucho que no corren desde la ROM</b>.</p>
 <h2 id="chocar">Chocar</h2>
 <p><code>HAY_CHOQUE</code> (0x53DC) es un solo test para todo: resta la posición del otro y su ancho, le suma el ancho propio, y si eso no se desborda, en ese eje no se tocan. Lo mismo en el otro eje, y solo hay choque si se pisan en los dos. Los tamaños van siempre en (HL), y cada cosa trae su tabla:</p>

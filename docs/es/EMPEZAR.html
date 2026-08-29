@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Empezar — Super Cobra (1983)</title>
 <style>
 :root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
@@ -104,7 +106,7 @@ make web            # rehace esta web</code></pre>
 <table><tr><th></th><th></th></tr><tr><td><code>L</code></td><td>una etiqueta y qué hace la rutina</td></tr><tr><td><code>C</code></td><td>un comentario en esa línea</td></tr><tr><td><code>B</code></td><td>una cabecera de bloque antes de esa dirección</td></tr><tr><td><code>D</code></td><td>un rango de datos, con su nombre y su explicación</td></tr><tr><td><code>F</code></td><td>la anchura de las filas de un bloque de datos</td></tr></table>
 <h2 id="como-se-hizo">Cómo se hizo</h2>
 <p>El trazador sigue el flujo real desde los puntos de entrada. Lo que no se puede deducir estáticamente —el gancho de la interrupción, las dos tablas incrustadas detrás de un <code>call</code>— se declara a mano en el <code>.entries</code>, con la razón escrita al lado.</p>
-<p>Este cartucho tiene además dos rutinas a las que **no se llega con un <code>call</code>**: 0x4691 hace <code>push hl</code> con la dirección de una de ellas y el despachador termina en <code>jp (hl)</code>, así que el <code>ret</code> de la rutina de estado aterriza ahí. Sin eso, 0x488B y 0x49EA se quedaban declaradas como datos siendo código.</p>
+<p>Este cartucho tiene además dos rutinas a las que <b>no se llega con un <code>call</code></b>: 0x4691 hace <code>push hl</code> con la dirección de una de ellas y el despachador termina en <code>jp (hl)</code>, así que el <code>ret</code> de la rutina de estado aterriza ahí. Sin eso, 0x488B y 0x49EA se quedaban declaradas como datos siendo código.</p>
 <p>Aquí no hay ninguna suposición disfrazada de hecho. Lo que no se sabe está en <a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a> y lo dice.</p>
 <h2 id="que-se-pueda-repetir">Que se pueda repetir</h2>
 <p><code>make verify</code> reensambla el listado y compara el resultado con la ROM original. Tiene que salir <b>idéntico, byte a byte</b>. Y <code>make sanity</code> comprueba después lo que el reensamblado no puede cazar: que ningún rango declarado como datos se esté leyendo como código, y que <b>ni uno solo de los 8192 bytes</b> se quede sin asignar.</p>
