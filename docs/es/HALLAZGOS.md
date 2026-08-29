@@ -120,3 +120,28 @@ va subiendo solo con cada instrucción que se ejecuta. Sus dos bits bajos dan 0,
 Los siete bytes de 0x41DD se copian a 0xE5F8 y se ejecutan desde la RAM porque
 se **escriben encima su propio desplazamiento**: son un `ld (IX+A),B`, que no
 existe. Está contado en [El código](EL-CODIGO.html).
+
+## El terreno es UNO, y no cambia de fase a fase
+
+Suena a que un juego de volar por cuevas tendría un mapa por fase. No los tiene:
+**tiene uno**, se monta una sola vez y es el mismo hasta el final.
+
+Lo dice el código por tres sitios, y ninguno es una interpretación:
+
+1. **`MONTA_EL_MAPA` (0x4106) no lee ni una variable de estado.** En todo su
+   cuerpo, desde 0x4106 hasta donde empieza `MONTA_EL_TERRENO` (0x4190), no hay
+   una sola lectura de la RAM del juego: solo escribe. Lo que despliega sale entero de la ROM —los cuatro dibujos de
+   0x4560 y la receta de 0x45E5, veintinueve bytes— y de nada más.
+2. **Se le llama desde un solo sitio**, 0x48F5, justo después de copiar las tres
+   vidas al marcador. O sea al empezar la partida, no al empezar cada fase.
+3. **La fase sí existe y sí manda**, pero en otra cosa. Vive en `0xE053` y se
+   lee en ocho sitios (0x5115, 0x522C, 0x527D, 0x5291, 0x52DC, 0x52F5, 0x536F y
+   0x53FD) para repartir el trabajo: qué enemigos salen, cómo se reparte el
+   sonido entre fotogramas, qué rutina de dibujo corre. **Ninguno de los ocho
+   está en el montaje del terreno.**
+
+Así que lo que cambia de una zona a otra es lo que te ataca y lo que suena, no
+por dónde vuelas. La receta de veintinueve bytes se recorre **dos veces**, la
+segunda con el acarreo puesto (el `scf` de 0x41C5), y esa es toda la diferencia
+entre el suelo y el techo: **el techo no es el espejo del suelo, tiene su propio
+relieve** y sale de la misma receta leída de otra forma.

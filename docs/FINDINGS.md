@@ -118,3 +118,30 @@ that goes into the high byte of the prize: 0, 100, 200 or 300 points.
 The seven bytes at 0x41DD are copied to 0xE5F8 and run from RAM because they
 **write their own displacement over themselves**: they are a `ld (IX+A),B`, which
 does not exist. It is explained in [The code](THE-CODE.html).
+
+## The terrain is ONE, and it does not change from stage to stage
+
+You would expect a game about flying through caves to have a map per stage. It
+does not: **it has one**, it is built once, and it is the same to the end.
+
+The code says so in three places, and none of them is an interpretation:
+
+1. **`MONTA_EL_MAPA` (0x4106) does not read a single state variable.** In its
+   whole body, from 0x4106 up to where `MONTA_EL_TERRENO` starts (0x4190), there
+   is not one read of the game's RAM: it only writes. What it unfolds comes entirely from the ROM —the four
+   drawings at 0x4560 and the twenty-nine-byte recipe at 0x45E5— and from
+   nothing else.
+2. **It is called from a single place**, 0x48F5, right after copying the three
+   lives into the scoreboard. That is at the start of the game, not the start of
+   each stage.
+3. **The stage does exist and does matter**, but for something else. It lives at
+   `0xE053` and is read in eight places (0x5115, 0x522C, 0x527D, 0x5291, 0x52DC,
+   0x52F5, 0x536F and 0x53FD) to split the work: which enemies appear, how the
+   sound is spread across frames, which drawing routine runs. **None of the
+   eight is in the terrain build.**
+
+So what changes from one zone to the next is what attacks you and what you hear,
+not where you fly. The twenty-nine-byte recipe is walked **twice**, the second
+time with the carry set (the `scf` at 0x41C5), and that is the whole difference
+between floor and ceiling: **the ceiling is not a mirror of the floor, it has
+its own relief** and comes out of the same recipe read differently.
