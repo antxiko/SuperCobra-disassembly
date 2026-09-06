@@ -42,3 +42,22 @@ Las tres capturas de esta web son pantallas reales de openMSX, pero aquí no hay
 **ni una cifra** salida del emulador: ni el coste de la interrupción, ni cuántas
 escrituras al VDP hace un fotograma, ni cuánto tarda una zona en pasar. Todo lo
 demás sale de leer el binario.
+
+El mapa de la zona 1 es lo único que sale de ejecutar el cartucho, y **tampoco**
+se ejecutó en openMSX: sale de `tools/z80run.py`, un intérprete escrito aquí. Por
+eso no está cotejado contra la VRAM de openMSX, y ese cotejo se debe.
+
+## Sólo está mapeada la zona 1
+
+`tools/mapa.py` vuela el cartucho y captura la zona 1 entera: 485 columnas, y
+sale igual byte a byte en cada pasada.
+
+De la zona 2 en adelante **no hay mapa**, y la culpa es del piloto, no de la
+herramienta. El piloto automático sólo mantiene la altura y dispara, y en la
+zona 2 muere siempre en el mismo sitio —416 cuadros después de empezar la zona,
+diez veces de diez—, así que la zona vuelve a empezar una y otra vez y la
+captura no pasa de ahí.
+
+Para tener el resto hace falta una de dos cosas: un piloto que esquive lo que
+tiene delante, o una forma de que el cartucho monte el terreno de una zona
+concreta sin tener que volar hasta ella. No se ha probado ninguna.

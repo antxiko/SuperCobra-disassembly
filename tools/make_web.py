@@ -345,6 +345,17 @@ GALERIA = [
      "RECONSTRUCTED from 0x443A — the 16×16 sprite drawings. That stream is "
      "the only thing in the whole cartridge writing to VRAM 0x1800, which is "
      "where VDP register 6 puts the sprite pattern table"),
+    ("mapa_zona01.png",
+     "VOLADA — la zona 1 entera, sus 485 columnas, con los cohetes y los "
+     "depósitos donde el cartucho los pone. No está leída de la ROM, porque no "
+     "está guardada en la ROM: <code>tools/mapa.py</code> ejecuta el cartucho "
+     "en un intérprete de Z80 escrito en Python, juega la partida y va "
+     "guardando la columna que entra por la derecha en cada paso de scroll",
+     "FLOWN — the whole of zone 1, its 485 columns, with the rockets and the "
+     "fuel tanks where the cartridge puts them. It is not read from the ROM, "
+     "because it is not stored in the ROM: <code>tools/mapa.py</code> runs the "
+     "cartridge on a Z80 interpreter written in Python, plays the game, and "
+     "saves the column that comes in from the right on every scroll step"),
     ("logo_konami.png",
      "RECONSTRUIDA de 0x4CFA — los 26 tiles del KONAMI grande, 147 bytes "
      "idénticos a los de Athletic Land, montados como los monta el cartucho: "

@@ -406,6 +406,38 @@ class TestWeb(unittest.TestCase):
                              "%s no lleva el rotulo del juego de cabecera"
                              % os.path.basename(pagina))
 
+    def test_el_mapa_de_la_zona_1_mide_lo_que_dice_la_web(self):
+        """Las 485 columnas que se publican tienen que ser las del PNG.
+
+        El mapa no se lee de la ROM -el terreno se monta en la RAM y solo
+        aparece una columna por paso de scroll-, asi que la unica manera de
+        equivocarse sin que se note es publicar una cifra que no sea la del
+        dibujo. La cifra sale del ancho: 8 pixeles por columna.
+        """
+        import struct
+        ruta = os.path.join(DOCS, "imagenes", "mapa_zona01.png")
+        self.assertTrue(os.path.exists(ruta), "falta el mapa de la zona 1")
+        with open(ruta, "rb") as f:
+            cabecera = f.read(24)
+        self.assertEqual(cabecera[:8], b"\x89PNG\r\n\x1a\n", "no es un PNG")
+        ancho, alto = struct.unpack(">II", cabecera[16:24])
+        self.assertEqual(ancho % 8, 0, "el ancho no es multiplo de 8")
+        self.assertEqual(alto, 40, "el decorado son cinco filas de 8 pixeles")
+        columnas = ancho // 8
+        for pagina in (os.path.join(DOCS, "index.html"),
+                       os.path.join(DOCS, "es", "index.html"),
+                       os.path.join(DOCS, "OPEN-QUESTIONS.md"),
+                       os.path.join(DOCS, "es", "PREGUNTAS-ABIERTAS.md")):
+            if not os.path.exists(pagina):
+                continue
+            with open(pagina, encoding="utf-8") as f:
+                texto = f.read()
+            for m in re.finditer(r"(\d+) columnas|(\d+) columns", texto):
+                dicha = int(m.group(1) or m.group(2))
+                self.assertEqual(dicha, columnas,
+                                 "%s dice %d columnas y el mapa tiene %d"
+                                 % (os.path.basename(pagina), dicha, columnas))
+
     def test_las_paginas_no_inventan_direcciones(self):
         """Cada 0xNNNN del cartucho que se cite tiene que existir."""
         vivas = set(re.findall(r";([0-9a-f]{4})(?:\s|$)", asm(), re.M))

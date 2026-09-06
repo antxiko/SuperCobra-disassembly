@@ -96,4 +96,9 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <p>Pasados por <code>DESPLIEGA</code>, diez ceros no son diez columnas: sin ningún 0x50 de por medio no se cambia de columna, así que las diez vueltas escriben en la misma. Qué se supone que aparece ahí, y por qué hacen falta diez pasadas iguales, no está comprobado.</p>
 <h2 id="nada-medido-en-el-emulador">Nada medido en el emulador</h2>
 <p>Las tres capturas de esta web son pantallas reales de openMSX, pero aquí no hay <b>ni una cifra</b> salida del emulador: ni el coste de la interrupción, ni cuántas escrituras al VDP hace un fotograma, ni cuánto tarda una zona en pasar. Todo lo demás sale de leer el binario.</p>
+<p>El mapa de la zona 1 es lo único que sale de ejecutar el cartucho, y <b>tampoco</b> se ejecutó en openMSX: sale de <code>tools/z80run.py</code>, un intérprete escrito aquí. Por eso no está cotejado contra la VRAM de openMSX, y ese cotejo se debe.</p>
+<h2 id="solo-esta-mapeada-la-zona-1">Sólo está mapeada la zona 1</h2>
+<p><code>tools/mapa.py</code> vuela el cartucho y captura la zona 1 entera: 485 columnas, y sale igual byte a byte en cada pasada.</p>
+<p>De la zona 2 en adelante <b>no hay mapa</b>, y la culpa es del piloto, no de la herramienta. El piloto automático sólo mantiene la altura y dispara, y en la zona 2 muere siempre en el mismo sitio —416 cuadros después de empezar la zona, diez veces de diez—, así que la zona vuelve a empezar una y otra vez y la captura no pasa de ahí.</p>
+<p>Para tener el resto hace falta una de dos cosas: un piloto que esquive lo que tiene delante, o una forma de que el cartucho monte el terreno de una zona concreta sin tener que volar hasta ella. No se ha probado ninguna.</p>
 <footer><p><em>Super Cobra</em> lo publico Konami para MSX; su numero de catalogo es RC-705 y son 8 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion.</p></footer></div>
