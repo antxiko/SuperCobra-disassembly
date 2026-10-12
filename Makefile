@@ -82,7 +82,14 @@ densidad:
 clean:
 	rm -rf $(WORK)/supercobra.trace.json $(WORK)/supercobra.map $(WORK)/png
 
-.PHONY: all comprueba trace listado verify sanity test densidad clean imagenes web
+
+PYMUS ?= python3     # el que tenga numpy y lameenc
+# La musica: el motor del cartucho ejecutado (tools/musica.py) a MP3
+musica: $(ROM)
+	$(PYMUS) tools/musica.py todas docs/audio
+	$(PYMUS) tools/pagina_musica.py
+
+.PHONY: musica all comprueba trace listado verify sanity test densidad clean imagenes web
 
 # ---------------------------------------------------------------------------
 # Las imagenes y la web
