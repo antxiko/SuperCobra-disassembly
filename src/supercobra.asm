@@ -3016,7 +3016,7 @@ SUELTA_EN_ZONA_0:		; Lo que dispara el terreno en las zonas de clase 0
 	ld a,l			;570c
 	cp 058h		;570d   ; Por debajo de la fila 0x58 se mira una cosa y por encima otra
 	ld a,r		;570f   ; El registro R de dado: tres bits, y sobre 0x30
-	and 038h		;5711
+	and 038h		;5711   ; FALLO DEL JUEGO: el and 0x38 pone el acarreo a 0 (el del cp 0x58 de 0x570D se pierde) y el add 0x30 (hasta 0x68) no lo vuelve a levantar: el jr nc de 0x5715 siempre salta a APUNTA_A_LA_NAVE; la segunda tanda (LA_SEGUNDA_TANDA) no se usa desde aqui y la fila 0x58 no cuenta
 	add a,030h		;5713
 	jr nc,APUNTA_A_LA_NAVE		;5715
 	ld a,l			;5717

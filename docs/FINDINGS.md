@@ -145,3 +145,13 @@ not where you fly. The twenty-nine-byte recipe is walked **twice**, the second
 time with the carry set (the `scf` at 0x41C5), and that is the whole difference
 between floor and ceiling: **the ceiling is not a mirror of the floor, it has
 its own relief** and comes out of the same recipe read differently.
+
+## The terrain's shot ignores the row
+
+In class 0 zones the terrain fires (`SUELTA_EN_ZONA_0`, `supercobra:570A`). The
+code compares the row with 0x58 ("below it one thing is looked at, above it
+another", `5710`) and keeps the result in the carry. But before using it, it
+does `and 0x38` and `add 0x30`, which always leave it at 0: the `jr nc` at
+`5715` always jumps and every shot aims at the ship. The second batch is not
+used from there. *A logical proof inside the block; the effect in a game has
+not been measured.*

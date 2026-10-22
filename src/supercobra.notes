@@ -1626,3 +1626,4 @@ C 0x5313 0xEC00 o 0xEE00, que MONTA_EL_MAPA si monta (0x4147 y 0x4162)
 
 C 0x5356 Y aqui se corta si hay techo: la cuenta de columnas que queda para el final de la zona la lleva el submodo 0, no los dos
 
+C 0x5711 FALLO DEL JUEGO: el and 0x38 pone el acarreo a 0 (el del cp 0x58 de 0x570D se pierde) y el add 0x30 (hasta 0x68) no lo vuelve a levantar: el jr nc de 0x5715 siempre salta a APUNTA_A_LA_NAVE; la segunda tanda (LA_SEGUNDA_TANDA) no se usa desde aqui y la fila 0x58 no cuenta

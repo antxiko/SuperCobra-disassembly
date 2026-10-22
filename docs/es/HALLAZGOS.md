@@ -145,3 +145,12 @@ por dónde vuelas. La receta de veintinueve bytes se recorre **dos veces**, la
 segunda con el acarreo puesto (el `scf` de 0x41C5), y esa es toda la diferencia
 entre el suelo y el techo: **el techo no es el espejo del suelo, tiene su propio
 relieve** y sale de la misma receta leída de otra forma.
+
+## El disparo del terreno ignora la fila
+
+En las zonas de clase 0, el terreno dispara (`SUELTA_EN_ZONA_0`, `supercobra:570A`).
+El código compara la fila con 0x58 («por debajo se mira una cosa y por encima
+otra», `5710`) y guarda el resultado en el acarreo. Pero antes de usarlo hace
+`and 0x38` y `add 0x30`, que lo dejan a 0 siempre: el `jr nc` de `5715` siempre
+salta y todos los disparos apuntan a la nave. La segunda tanda no se usa desde
+ahí. *Prueba lógica dentro del bloque; el efecto en partida no se ha medido.*
