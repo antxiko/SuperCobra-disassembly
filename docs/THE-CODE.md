@@ -143,3 +143,30 @@ thing brings its own table:
 Every frame three checks are chained (0x5139) and **as soon as one sets carry the
 rest are skipped**. Between columns 0x99 and 0xA1 none of them is checked: that
 is the stage change.
+
+## Code shared with other Konami cartridges
+
+This disassembly has been compared, instruction by instruction, with
+every other Konami one in the series. A block counts when the same
+instructions, at least six of them from a label to its `ret` or its
+unconditional jump, are in both cartridges; the addresses are left
+aside, because they change from one cartridge to the next. Of the
+other 57, **39** have at least one block in common with this one;
+these are the ones that share the most:
+
+| Cartridge | Blocks | Instructions | For example (here = there) |
+|---|---:|---:|---|
+| [Circus Charlie](https://antxiko.github.io/CircusCharlie-disassembly/) | 18 | 242 | `MIRA_VIDA_EXTRA` (0x494F) = `mira_la_vida_extra` |
+| [Magical Tree](https://antxiko.github.io/MagicalTree-disassembly/) | 17 | 216 | `EL_VOLUMEN_DEL_EFECTO` (0x5D97) = `lee_la_nota_de_la_partitura` |
+| [Konami’s Mahjong Dojo](https://antxiko.github.io/KonamisMahjongDojo-disassembly/) | 12 | 123 | `PINTA_ROTULO` (0x4AC6) = `pinta_lista_formato_b` |
+| [Athletic Land](https://antxiko.github.io/AthleticLand-disassembly/) | 11 | 116 | `MUSICA_PERIODO` (0x5E2F) |
+| [Cabbage Patch Kids](https://antxiko.github.io/CabbagePatchKids-disassembly/) | 10 | 97 | `SONIDO_ENCADENADO` (0x5CF9) = `SONIDO_SIGUIENTE_VUELTA` |
+| [Hyper Sports 1](https://antxiko.github.io/HyperSports1-disassembly/) | 9 | 117 | `SUBE_LOGOTIPO` (0x4CBF) = `DESCOMPRIME_A_TERCIOS_4748` |
+| [Monkey Academy](https://antxiko.github.io/MonkeyAcademy-disassembly/) | 9 | 136 | `MUSICA_EVENTO` (0x5DF4) |
+| [Comic Bakery](https://antxiko.github.io/ComicBakery-disassembly/) | 8 | 97 | `PARPADEA_EL_JUGADOR` (0x49EA) = `parpadea_el_turno` |
+| [Antarctic Adventure](https://antxiko.github.io/AntarcticAdventure-disassembly/) | 6 | 98 | `MUSICA_EVENTO` (0x5DF4) = `VOLUMEN_MIRA_FD` |
+| [Hyper Sports 2](https://antxiko.github.io/HyperSports2-disassembly/) | 6 | 48 | `EL_CANAL_SIGUIENTE` (0x5D3D) = `VUELTA_DE_UN_CANAL` |
+
+The whole matrix, the 58 cartridges against each other, is on
+[The routines](https://antxiko.github.io/MSX-disassembly-database/THE-ROUTINES.html) in the series database, along
+with the method and the program that measures it.

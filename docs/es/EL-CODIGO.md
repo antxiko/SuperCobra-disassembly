@@ -143,3 +143,30 @@ van siempre en (HL), y cada cosa trae su tabla:
 En cada fotograma se encadenan tres comprobaciones (0x5139) y **en cuanto una da
 carry las demás no se miran**. Entre las columnas 0x99 y 0xA1 no se mira
 ninguna: es el paso de fase.
+
+## Código compartido con otros cartuchos de Konami
+
+Este desensamblado se ha comparado, instrucción por instrucción, con
+todos los demás de Konami de la serie. Cuenta un bloque cuando las
+mismas instrucciones, al menos seis desde una etiqueta hasta su `ret`
+o su salto sin condición, están en los dos cartuchos; las direcciones
+no se miran, porque cambian de un cartucho a otro. De los otros 57,
+**39** tienen al menos un bloque en común con este; estos son los
+que más comparten:
+
+| Cartucho | Bloques | Instrucciones | Por ejemplo (aquí = allí) |
+|---|---:|---:|---|
+| [Circus Charlie](https://antxiko.github.io/CircusCharlie-disassembly/es/) | 18 | 242 | `MIRA_VIDA_EXTRA` (0x494F) = `mira_la_vida_extra` |
+| [Magical Tree](https://antxiko.github.io/MagicalTree-disassembly/es/) | 17 | 216 | `EL_VOLUMEN_DEL_EFECTO` (0x5D97) = `lee_la_nota_de_la_partitura` |
+| [Konami’s Mahjong Dojo](https://antxiko.github.io/KonamisMahjongDojo-disassembly/es/) | 12 | 123 | `PINTA_ROTULO` (0x4AC6) = `pinta_lista_formato_b` |
+| [Athletic Land](https://antxiko.github.io/AthleticLand-disassembly/es/) | 11 | 116 | `MUSICA_PERIODO` (0x5E2F) |
+| [Cabbage Patch Kids](https://antxiko.github.io/CabbagePatchKids-disassembly/es/) | 10 | 97 | `SONIDO_ENCADENADO` (0x5CF9) = `SONIDO_SIGUIENTE_VUELTA` |
+| [Hyper Sports 1](https://antxiko.github.io/HyperSports1-disassembly/es/) | 9 | 117 | `SUBE_LOGOTIPO` (0x4CBF) = `DESCOMPRIME_A_TERCIOS_4748` |
+| [Monkey Academy](https://antxiko.github.io/MonkeyAcademy-disassembly/es/) | 9 | 136 | `MUSICA_EVENTO` (0x5DF4) |
+| [Comic Bakery](https://antxiko.github.io/ComicBakery-disassembly/es/) | 8 | 97 | `PARPADEA_EL_JUGADOR` (0x49EA) = `parpadea_el_turno` |
+| [Antarctic Adventure](https://antxiko.github.io/AntarcticAdventure-disassembly/es/) | 6 | 98 | `MUSICA_EVENTO` (0x5DF4) = `VOLUMEN_MIRA_FD` |
+| [Hyper Sports 2](https://antxiko.github.io/HyperSports2-disassembly/es/) | 6 | 48 | `EL_CANAL_SIGUIENTE` (0x5D3D) = `VUELTA_DE_UN_CANAL` |
+
+La matriz entera, los 58 cartuchos entre sí, está en
+[Las rutinas](https://antxiko.github.io/MSX-disassembly-database/es/LAS-RUTINAS.html) de la base de datos de la
+serie, con el método y el programa que la mide.
