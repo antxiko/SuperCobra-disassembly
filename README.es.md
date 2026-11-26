@@ -46,8 +46,8 @@ tests** lo vigilan todo.
   más.
 
 La lista entera, con direcciones y cifras, está en
-[docs/es/HALLAZGOS.md](docs/es/HALLAZGOS.md). Lo que *no* se sabe está en
-[docs/es/PREGUNTAS-ABIERTAS.md](docs/es/PREGUNTAS-ABIERTAS.md), y lo dice.
+[docs/es/CURIOSIDADES.md](docs/es/CURIOSIDADES.md). Lo que *no* se sabe está en
+[docs/es/CURIOSIDADES.md](docs/es/CURIOSIDADES.md), y lo dice.
 
 ## Cómo se usa
 
@@ -60,7 +60,7 @@ La imagen del cartucho **no se distribuye aquí**. Ponla en la raíz como
     make web        # rehace la web
 
 Hacen falta Python 3, `pasmo` y `z80dasm`. Las instrucciones completas están en
-[docs/es/EMPEZAR.md](docs/es/EMPEZAR.md).
+[docs/es/POR-DENTRO.md](docs/es/POR-DENTRO.md).
 
 ## Aviso legal
 

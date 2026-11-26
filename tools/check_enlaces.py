@@ -14,7 +14,8 @@ import sys
 
 def main(raiz_web):
     rotos, total = [], 0
-    for raiz, _, ficheros in os.walk(raiz_web):
+    for raiz, dirs, ficheros in os.walk(raiz_web):
+        dirs[:] = [d for d in dirs if not d.startswith("_")]   # plantillas de Jekyll
         for fn in ficheros:
             if not fn.endswith(".html"):
                 continue
@@ -25,10 +26,17 @@ def main(raiz_web):
                 if destino.startswith(("http", "#", "data:", "mailto:")):
                     continue
                 total += 1
-                objetivo = os.path.normpath(
-                    os.path.join(raiz, destino.split("#")[0].split("?")[0]))
-                if not os.path.exists(objetivo):
+                fichero, _, ancla = destino.partition("#")
+                fichero = fichero.split("?")[0]
+                objetivo = os.path.normpath(os.path.join(raiz, fichero))
+                # Pages no convierte el markdown: un enlace a un .md que existe
+                # al lado sirve el texto en crudo, y eso tambien esta roto
+                # en el codigo fuente (docs/) la pagina aun es un .md que Jekyll convertira
+                fuente_md = fichero.endswith(".html") and os.path.exists(objetivo[:-5] + ".md")
+                if (not os.path.exists(objetivo) and not fuente_md) or fichero.endswith(".md"):
                     rotos.append((p, destino))
+                elif ancla and objetivo.endswith(".html") and                         f'id="{ancla}"' not in open(objetivo, encoding="utf-8").read():
+                    rotos.append((p, destino + "  (no existe el ancla)"))
     for p, d in rotos:
         print(f"  ROTO  {p}  ->  {d}")
     print(f"{total} enlaces locales comprobados, {len(rotos)} rotos")

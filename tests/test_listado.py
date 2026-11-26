@@ -273,12 +273,7 @@ class TestListado(unittest.TestCase):
 class TestWeb(unittest.TestCase):
     """La web es bilingue y se genera: lo que se vigila es que no se separe."""
 
-    PAGINAS = [("GETTING-STARTED.md", "EMPEZAR.md"),
-               ("THE-GAME.md", "EL-JUEGO.md"),
-               ("THE-CARTRIDGE.md", "EL-CARTUCHO.md"),
-               ("THE-CODE.md", "EL-CODIGO.md"),
-               ("FINDINGS.md", "HALLAZGOS.md"),
-               ("OPEN-QUESTIONS.md", "PREGUNTAS-ABIERTAS.md")]
+    PAGINAS = [('THE-GAME.md', 'EL-JUEGO.md'), ('THE-PICTURES.md', 'LAS-IMAGENES.md'), ('THE-MUSIC.md', 'LA-MUSICA.md'), ('CURIOSITIES.md', 'CURIOSIDADES.md'), ('UNDER-THE-HOOD.md', 'POR-DENTRO.md')]
 
     def test_cada_pagina_tiene_su_pareja_en_el_otro_idioma(self):
         for en, es in self.PAGINAS:
@@ -292,7 +287,7 @@ class TestWeb(unittest.TestCase):
     # Athletic Land y cero con Frogger no se puede contar sin decir los
     # nombres. En las demas paginas siguen prohibidos, que es donde se colaria
     # un comentario prestado sin que nadie lo notara.
-    COMPARAN = ("FINDINGS.md", "HALLAZGOS.md")
+    COMPARAN = ("CURIOSITIES.md", "CURIOSIDADES.md")
 
     def test_las_paginas_no_hablan_de_otro_juego(self):
         for raiz, _, ficheros in os.walk(DOCS):
@@ -314,7 +309,7 @@ class TestWeb(unittest.TestCase):
         cifra.
         """
         for fn in self.COMPARAN:
-            ruta = (os.path.join(DOCS, fn) if fn == "FINDINGS.md"
+            ruta = (os.path.join(DOCS, fn) if fn == "CURIOSITIES.md"
                     else os.path.join(DOCS, "es", fn))
             with open(ruta, encoding="utf-8") as f:
                 lineas = f.read().splitlines()
@@ -335,7 +330,7 @@ class TestWeb(unittest.TestCase):
         lado. Las otras dos herramientas no tienen ninguna razon para nombrar
         a nadie.
         """
-        for fn in ("md2html.py", "graficos.py"):
+        for fn in ("contenido_web.py", "graficos.py"):
             with open(os.path.join(RAIZ, "tools", fn), encoding="utf-8") as f:
                 texto = f.read()
             for juego in OTROS_JUEGOS:
@@ -345,8 +340,8 @@ class TestWeb(unittest.TestCase):
         # partida en cinco cadenas- sino el hallazgo entero, que es como lo
         # lee quien entra en la web.
         sys.path.insert(0, os.path.join(RAIZ, "tools"))
-        import make_web
-        for idioma, hallazgos in make_web.HALLAZGOS.items():
+        import contenido_web as make_web
+        for idioma, hallazgos in {i: [(s.split("\n", 1)[0], s) for s in re.split(r"(?m)^#{2,3} ", open(os.path.join(DOCS, *r), encoding="utf-8").read())[1:]] for i, r in (("es", ("es", "CURIOSIDADES.md")), ("en", ("CURIOSITIES.md",)))}.items():
             for titulo, cuerpo in hallazgos:
                 texto = titulo + " " + cuerpo
                 for juego in OTROS_JUEGOS:
@@ -363,7 +358,7 @@ class TestWeb(unittest.TestCase):
         sola constante: si esa constante se queda sin cambiar, toda la web
         manda al repositorio del OTRO cartucho y no se nota mirandola.
         """
-        with open(os.path.join(RAIZ, "tools", "md2html.py"),
+        with open(os.path.join(RAIZ, "tools", "contenido_web.py"),
                   encoding="utf-8") as f:
             texto = f.read()
         urls = re.findall(r"https://github\.com/antxiko/[\w.-]+", texto)
@@ -374,7 +369,7 @@ class TestWeb(unittest.TestCase):
 
     def test_la_portada_publica_las_cifras_del_arbol(self):
         """Las cifras de la web son las del presupuesto, y suman el cartucho."""
-        with open(os.path.join(RAIZ, "tools", "make_web.py"),
+        with open(os.path.join(RAIZ, "tools", "contenido_web.py"),
                   encoding="utf-8") as f:
             texto = f.read()
         self.assertIn("CODIGO = %d" % CODIGO, texto)

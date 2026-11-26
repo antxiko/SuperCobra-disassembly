@@ -46,8 +46,8 @@ of it.
   else.
 
 The full list, with addresses and figures, is in
-[docs/FINDINGS.md](docs/FINDINGS.md). What is *not* known is in
-[docs/OPEN-QUESTIONS.md](docs/OPEN-QUESTIONS.md), and it says so.
+[docs/CURIOSITIES.md](docs/CURIOSITIES.md). What is *not* known is in
+[docs/CURIOSITIES.md](docs/CURIOSITIES.md), and it says so.
 
 ## Running it
 
@@ -60,7 +60,7 @@ The cartridge image is **not distributed here**. Put it in the root as
     make web        # rebuild the site
 
 You need Python 3, `pasmo` and `z80dasm`. Full instructions in
-[docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).
+[docs/UNDER-THE-HOOD.md](docs/UNDER-THE-HOOD.md).
 
 ## Legal notice
 
